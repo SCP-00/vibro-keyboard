@@ -131,16 +131,7 @@ class PredictorEngine(private val context: Context, private val lang: String) {
 
     private fun saveUserData() {
         try {
-            val sb = StringBuilder()
-            sb.append("{")
-            var first = true
-            for ((word, freq) in userFreqs) {
-                if (!first) sb.append(",")
-                first = false
-                sb.append("\"${word.replace("\"", "\\\"")}\":$freq")
-            }
-            sb.append("}")
-            userDataFile.writeText(sb.toString())
+            userDataFile.writeText(JSONObject(userFreqs).toString())
         } catch (e: Exception) {
             Log.w(TAG, "Failed to save user data", e)
         }
