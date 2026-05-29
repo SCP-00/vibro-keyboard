@@ -1,14 +1,6 @@
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.compose.compiler)
-  alias(libs.plugins.kotlin.serialization)
-  id("com.chaquo.python")
-}
-
-chaquopy {
-    defaultConfig {
-    buildPython("C:\\Users\\andyh\\AppData\\Local\\Programs\\Python\\Python310\\python.exe")
-    }
 }
 
 android {

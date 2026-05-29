@@ -10,9 +10,9 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import android.util.Log
-import com.chaquo.python.PyObject
-import com.chaquo.python.Python
+import com.example.smarttext.engine.PredictorEngine
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -23,10 +23,12 @@ fun PredictorScreen() {
     var currentLang by remember { mutableStateOf("es") }
     var predictorError by remember { mutableStateOf<String?>(null) }
     var isLoading by remember { mutableStateOf(true) }
+    val scope = rememberCoroutineScope()
+    var predictorStats by remember { mutableStateOf("") }
     val context = LocalContext.current
 
-    // Initialize Python Predictor on a background thread (prevents ANR)
-    val predictor = remember { mutableStateOf<PyObject?>(null) }
+    // Initialize native Kotlin Predictor on a background thread
+    val predictor = remember { mutableStateOf<PredictorEngine?>(null) }
 
     LaunchedEffect(currentLang) {
         isLoading = true
@@ -34,11 +36,10 @@ fun PredictorScreen() {
         predictor.value = null
         try {
             val pred = withContext(Dispatchers.IO) {
-                val py = Python.getInstance()
-                val predictorModule = py.getModule("engine.predictor")
-                predictorModule.callAttr("Predictor", context.filesDir.absolutePath, currentLang)
+                PredictorEngine(context, currentLang)
             }
             predictor.value = pred
+            predictorStats = "Predictor nativo • ${pred.allWords.size} palabras"
         } catch (e: Exception) {
             predictorError = "Error al cargar predictor: ${e.message}"
             Log.e("SmartText", "Predictor init error", e)
@@ -71,7 +72,7 @@ fun PredictorScreen() {
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            // Language selector
+            // Language selector + status
             SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                 SegmentedButton(
                     selected = currentLang == "es",
@@ -85,7 +86,7 @@ fun PredictorScreen() {
                 ) { Text("English") }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Loading indicator
             if (isLoading) {
@@ -132,22 +133,16 @@ fun PredictorScreen() {
                     val previousWord = if (words.size >= 2) words[words.size - 2] else null
 
                     val p = predictor.value
-                    if (p != null && currentWord.isNotEmpty()) {
+                    if (p != null) {
                         try {
-                            val result = p.callAttr("predict", currentWord, previousWord ?: "", 3)
-                            suggestions = result.asList().map { it.toString() }
-                            Log.d("SmartText", "Prefix predict: '$currentWord' ctx='${previousWord ?: ""}' -> $suggestions")
+                            suggestions = p.predict(currentWord, previousWord, 3)
+                            if (currentWord.isNotEmpty()) {
+                                Log.d("SmartText", "Prefix predict: '$currentWord' ctx='${previousWord ?: ""}' -> $suggestions")
+                            } else if (previousWord != null) {
+                                Log.d("SmartText", "Bigram predict: '' ctx='$previousWord' -> $suggestions")
+                            }
                         } catch (e: Exception) {
                             Log.e("SmartText", "Predict error", e)
-                            suggestions = emptyList()
-                        }
-                    } else if (p != null && previousWord != null && currentWord.isEmpty()) {
-                        try {
-                            val raw = p.callAttr("predict", "", previousWord, 3)
-                            suggestions = raw.asList().map { it.toString() }
-                            Log.d("SmartText", "Bigram predict: '' ctx='$previousWord' -> $suggestions")
-                        } catch (e: Exception) {
-                            Log.e("SmartText", "Bigram predict error", e)
                             suggestions = emptyList()
                         }
                     } else {
@@ -196,10 +191,13 @@ fun PredictorScreen() {
                                 words.add(sug)
                                 text = words.joinToString(" ") + " "
                                 suggestions = emptyList()
-                                // Boost frequency of selected word
-                                try {
-                                    predictor.value?.callAttr("update_frequency", sug)
-                                } catch (_: Exception) {}
+                                // Boost frequency of selected word on background thread
+                                val p = predictor.value
+                                if (p != null) {
+                                    scope.launch(Dispatchers.IO) {
+                                        p.updateFrequency(sug)
+                                    }
+                                }
                                 // Request focus back to text field
                                 focusRequester.requestFocus()
                             },
@@ -235,11 +233,7 @@ fun PredictorScreen() {
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = if (currentLang == "es") {
-                            "Sistema de predicción basado en Lógica Difusa y Trie"
-                        } else {
-                            "Prediction system based on Fuzzy Logic and Trie"
-                        },
+                        text = predictorStats,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.outline
                     )
