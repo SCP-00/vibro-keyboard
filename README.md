@@ -22,7 +22,14 @@
 
 ## 📸 Capturas de Pantalla
 
-*(pendiente)*
+| # | Captura | Descripción |
+|---|---------|-------------|
+| 1 | ![Home Español](docs/screenshot_1_home_es.png) | Pantalla principal — Español, predictor listo |
+| 2 | ![Predicciones ES](docs/screenshot_2_predictions_es.png) | Escribiendo "cas" → sugerencias: casa, caso, casi |
+| 3 | ![Home English](docs/screenshot_3_home_en.png) | Main screen — English mode |
+| 4 | ![Predicciones EN](docs/screenshot_4_predictions_en.png) | Typing "th" → suggestions: the, that, this |
+
+> 📖 **Tutorial completo disponible en [`docs/tutorial/`](docs/tutorial/README.md)**
 
 ---
 
