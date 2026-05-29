@@ -1,0 +1,1056 @@
+{
+  "summary": {
+    "en": {
+      "tests": 28,
+      "top1": 16.0,
+      "top3": 14.333333333333334,
+      "times": [
+        0.63,
+        0.53,
+        0.09,
+        1.0,
+        0.22,
+        0.02,
+        0.6,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        2.03,
+        36.2,
+        19.48,
+        26.85,
+        30.58,
+        35.68,
+        28.03,
+        32.19,
+        28.14,
+        24.55,
+        24.67,
+        3.57,
+        2.0,
+        6.69
+      ]
+    },
+    "es": {
+      "tests": 15,
+      "top1": 14.0,
+      "top3": 12.666666666666666,
+      "times": [
+        0.26,
+        0.06,
+        0.02,
+        0.07,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        23.64,
+        0.04,
+        0.02,
+        24.16,
+        0.04
+      ]
+    }
+  },
+  "details": [
+    {
+      "scenario": "EN: prefix='th' ctx='-'",
+      "current": "th",
+      "previous": null,
+      "expected": [
+        "the",
+        "they",
+        "their"
+      ],
+      "got": [
+        "the",
+        "that",
+        "this",
+        "they",
+        "their"
+      ],
+      "top1_acc": 1.0,
+      "top3_acc": 1.0,
+      "top5_acc": 1.0,
+      "elapsed_ms": 0.63
+    },
+    {
+      "scenario": "EN: prefix='ho' ctx='-'",
+      "current": "ho",
+      "previous": null,
+      "expected": [
+        "home",
+        "how",
+        "hot"
+      ],
+      "got": [
+        "home",
+        "how",
+        "hotel",
+        "hotels",
+        "homepage"
+      ],
+      "top1_acc": 1.0,
+      "top3_acc": 1.0,
+      "top5_acc": 0.6,
+      "elapsed_ms": 0.53
+    },
+    {
+      "scenario": "EN: prefix='hel' ctx='-'",
+      "current": "hel",
+      "previous": null,
+      "expected": [
+        "help",
+        "hello",
+        "held"
+      ],
+      "got": [
+        "help",
+        "helicopter",
+        "helpful",
+        "helping",
+        "helps"
+      ],
+      "top1_acc": 1.0,
+      "top3_acc": 0.3333333333333333,
+      "top5_acc": 0.2,
+      "elapsed_ms": 0.09
+    },
+    {
+      "scenario": "EN: prefix='com' ctx='-'",
+      "current": "com",
+      "previous": null,
+      "expected": [
+        "come",
+        "common",
+        "company"
+      ],
+      "got": [
+        "company",
+        "comments",
+        "community",
+        "companies",
+        "companion"
+      ],
+      "top1_acc": 1.0,
+      "top3_acc": 0.6666666666666666,
+      "top5_acc": 0.4,
+      "elapsed_ms": 1.0
+    },
+    {
+      "scenario": "EN: prefix='wor' ctx='-'",
+      "current": "wor",
+      "previous": null,
+      "expected": [
+        "work",
+        "world",
+        "word"
+      ],
+      "got": [
+        "work",
+        "world",
+        "worldwide",
+        "workshops",
+        "workstation"
+      ],
+      "top1_acc": 1.0,
+      "top3_acc": 0.6666666666666666,
+      "top5_acc": 0.4,
+      "elapsed_ms": 0.22
+    },
+    {
+      "scenario": "EN: prefix='peo' ctx='-'",
+      "current": "peo",
+      "previous": null,
+      "expected": [
+        "people"
+      ],
+      "got": [
+        "people",
+        "peoples"
+      ],
+      "top1_acc": 1.0,
+      "top3_acc": 1.0,
+      "top5_acc": 1.0,
+      "elapsed_ms": 0.02
+    },
+    {
+      "scenario": "EN: prefix='int' ctx='-'",
+      "current": "int",
+      "previous": null,
+      "expected": [
+        "into",
+        "interest",
+        "international"
+      ],
+      "got": [
+        "into",
+        "international",
+        "internationally",
+        "internship",
+        "interested"
+      ],
+      "top1_acc": 1.0,
+      "top3_acc": 0.6666666666666666,
+      "top5_acc": 0.4,
+      "elapsed_ms": 0.6
+    },
+    {
+      "scenario": "EN: prefix='' ctx='how'",
+      "current": "",
+      "previous": "how",
+      "expected": [
+        "to",
+        "many",
+        "much"
+      ],
+      "got": [
+        "to",
+        "you",
+        "many",
+        "does",
+        "long"
+      ],
+      "top1_acc": 1.0,
+      "top3_acc": 0.6666666666666666,
+      "top5_acc": 0.6,
+      "elapsed_ms": 0.0
+    },
+    {
+      "scenario": "EN: prefix='' ctx='i'",
+      "current": "",
+      "previous": "i",
+      "expected": [
+        "am",
+        "have",
+        "want"
+      ],
+      "got": [
+        "have",
+        "am",
+        "will",
+        "can",
+        "like"
+      ],
+      "top1_acc": 1.0,
+      "top3_acc": 0.6666666666666666,
+      "top5_acc": 0.6,
+      "elapsed_ms": 0.0
+    },
+    {
+      "scenario": "EN: prefix='' ctx='you'",
+      "current": "",
+      "previous": "you",
+      "expected": [
+        "are",
+        "have",
+        "can"
+      ],
+      "got": [
+        "are",
+        "have",
+        "can",
+        "will",
+        "do"
+      ],
+      "top1_acc": 1.0,
+      "top3_acc": 1.0,
+      "top5_acc": 0.8,
+      "elapsed_ms": 0.0
+    },
+    {
+      "scenario": "EN: prefix='' ctx='to'",
+      "current": "",
+      "previous": "to",
+      "expected": [
+        "be",
+        "have",
+        "do"
+      ],
+      "got": [
+        "be",
+        "have",
+        "do",
+        "get",
+        "see"
+      ],
+      "top1_acc": 1.0,
+      "top3_acc": 1.0,
+      "top5_acc": 0.8,
+      "elapsed_ms": 0.0
+    },
+    {
+      "scenario": "EN: prefix='' ctx='the'",
+      "current": "",
+      "previous": "the",
+      "expected": [
+        "best",
+        "same",
+        "first"
+      ],
+      "got": [
+        "new",
+        "first",
+        "time",
+        "other",
+        "best"
+      ],
+      "top1_acc": 1.0,
+      "top3_acc": 0.6666666666666666,
+      "top5_acc": 0.6,
+      "elapsed_ms": 0.0
+    },
+    {
+      "scenario": "EN: prefix='' ctx='we'",
+      "current": "",
+      "previous": "we",
+      "expected": [
+        "are",
+        "have",
+        "can"
+      ],
+      "got": [
+        "are",
+        "have",
+        "can",
+        "will",
+        "do"
+      ],
+      "top1_acc": 1.0,
+      "top3_acc": 1.0,
+      "top5_acc": 0.8,
+      "elapsed_ms": 0.0
+    },
+    {
+      "scenario": "EN: prefix='' ctx='they'",
+      "current": "",
+      "previous": "they",
+      "expected": [
+        "are",
+        "have",
+        "can"
+      ],
+      "got": [
+        "are",
+        "have",
+        "can",
+        "will",
+        "would"
+      ],
+      "top1_acc": 1.0,
+      "top3_acc": 1.0,
+      "top5_acc": 1.0,
+      "elapsed_ms": 0.0
+    },
+    {
+      "scenario": "EN: prefix='i' ctx='how'",
+      "current": "i",
+      "previous": "how",
+      "expected": [
+        "important",
+        "if",
+        "idea"
+      ],
+      "got": [
+        "im",
+        "ii",
+        "id",
+        "ip",
+        "ie"
+      ],
+      "top1_acc": 0.0,
+      "top3_acc": 0.0,
+      "top5_acc": 0.0,
+      "elapsed_ms": 2.03
+    },
+    {
+      "scenario": "EN: prefix='recieve' ctx='-'",
+      "current": "recieve",
+      "previous": null,
+      "expected": [
+        "receive"
+      ],
+      "got": [
+        "review",
+        "reviews",
+        "time",
+        "site",
+        "there"
+      ],
+      "top1_acc": 0.0,
+      "top3_acc": 0.0,
+      "top5_acc": 0.0,
+      "elapsed_ms": 36.2
+    },
+    {
+      "scenario": "EN: prefix='teh' ctx='-'",
+      "current": "teh",
+      "previous": null,
+      "expected": [
+        "the",
+        "teach",
+        "tech"
+      ],
+      "got": [
+        "are",
+        "as",
+        "was",
+        "of",
+        "on"
+      ],
+      "top1_acc": 0.0,
+      "top3_acc": 0.0,
+      "top5_acc": 0.0,
+      "elapsed_ms": 19.48
+    },
+    {
+      "scenario": "EN: prefix='adress' ctx='-'",
+      "current": "adress",
+      "previous": null,
+      "expected": [
+        "address",
+        "across"
+      ],
+      "got": [
+        "are",
+        "more",
+        "as",
+        "does",
+        "free"
+      ],
+      "top1_acc": 0.0,
+      "top3_acc": 0.0,
+      "top5_acc": 0.0,
+      "elapsed_ms": 26.85
+    },
+    {
+      "scenario": "EN: prefix='calender' ctx='-'",
+      "current": "calender",
+      "previous": null,
+      "expected": [
+        "calendar",
+        "calm"
+      ],
+      "got": [
+        "center",
+        "online",
+        "under",
+        "information",
+        "time"
+      ],
+      "top1_acc": 0.0,
+      "top3_acc": 0.0,
+      "top5_acc": 0.0,
+      "elapsed_ms": 30.58
+    },
+    {
+      "scenario": "EN: prefix='definately' ctx='-'",
+      "current": "definately",
+      "previous": null,
+      "expected": [
+        "definitely",
+        "define"
+      ],
+      "got": [
+        "information",
+        "time",
+        "they",
+        "site",
+        "he"
+      ],
+      "top1_acc": 0.0,
+      "top3_acc": 0.0,
+      "top5_acc": 0.0,
+      "elapsed_ms": 35.68
+    },
+    {
+      "scenario": "EN: prefix='beleive' ctx='-'",
+      "current": "beleive",
+      "previous": null,
+      "expected": [
+        "believe",
+        "bell"
+      ],
+      "got": [
+        "online",
+        "been",
+        "like",
+        "service",
+        "please"
+      ],
+      "top1_acc": 0.0,
+      "top3_acc": 0.0,
+      "top5_acc": 0.0,
+      "elapsed_ms": 28.03
+    },
+    {
+      "scenario": "EN: prefix='goverment' ctx='-'",
+      "current": "goverment",
+      "previous": null,
+      "expected": [
+        "government",
+        "govern"
+      ],
+      "got": [
+        "over",
+        "information",
+        "time",
+        "they",
+        "site"
+      ],
+      "top1_acc": 0.0,
+      "top3_acc": 0.0,
+      "top5_acc": 0.0,
+      "elapsed_ms": 32.19
+    },
+    {
+      "scenario": "EN: prefix='occured' ctx='-'",
+      "current": "occured",
+      "previous": null,
+      "expected": [
+        "occurred",
+        "occur"
+      ],
+      "got": [
+        "our",
+        "used",
+        "out",
+        "use",
+        "there"
+      ],
+      "top1_acc": 0.0,
+      "top3_acc": 0.0,
+      "top5_acc": 0.0,
+      "elapsed_ms": 28.14
+    },
+    {
+      "scenario": "EN: prefix='thier' ctx='-'",
+      "current": "thier",
+      "previous": null,
+      "expected": [
+        "their",
+        "thick"
+      ],
+      "got": [
+        "that",
+        "the",
+        "this",
+        "more",
+        "new"
+      ],
+      "top1_acc": 0.0,
+      "top3_acc": 0.0,
+      "top5_acc": 0.0,
+      "elapsed_ms": 24.55
+    },
+    {
+      "scenario": "EN: prefix='wierd' ctx='-'",
+      "current": "wierd",
+      "previous": null,
+      "expected": [
+        "weird",
+        "wild"
+      ],
+      "got": [
+        "with",
+        "we",
+        "will",
+        "more",
+        "new"
+      ],
+      "top1_acc": 0.0,
+      "top3_acc": 0.0,
+      "top5_acc": 0.0,
+      "elapsed_ms": 24.67
+    },
+    {
+      "scenario": "EN: prefix='a' ctx='-'",
+      "current": "a",
+      "previous": null,
+      "expected": [
+        "a",
+        "about",
+        "all"
+      ],
+      "got": [
+        "a",
+        "an",
+        "as",
+        "at",
+        "all"
+      ],
+      "top1_acc": 1.0,
+      "top3_acc": 1.0,
+      "top5_acc": 1.0,
+      "elapsed_ms": 3.57
+    },
+    {
+      "scenario": "EN: prefix='i' ctx='-'",
+      "current": "i",
+      "previous": null,
+      "expected": [
+        "i",
+        "if",
+        "in"
+      ],
+      "got": [
+        "i",
+        "in",
+        "is",
+        "it",
+        "if"
+      ],
+      "top1_acc": 1.0,
+      "top3_acc": 1.0,
+      "top5_acc": 1.0,
+      "elapsed_ms": 2.0
+    },
+    {
+      "scenario": "EN: prefix='' ctx='-'",
+      "current": "",
+      "previous": null,
+      "expected": [],
+      "got": [
+        "the",
+        "to",
+        "of",
+        "on",
+        "a"
+      ],
+      "top1_acc": 0.0,
+      "top3_acc": 1.0,
+      "top5_acc": 1.0,
+      "elapsed_ms": 6.69
+    },
+    {
+      "scenario": "ES: prefix='cas' ctx='-'",
+      "current": "cas",
+      "previous": null,
+      "expected": [
+        "casa",
+        "caso",
+        "casi"
+      ],
+      "got": [
+        "casa",
+        "caso",
+        "casi",
+        "casó",
+        "case"
+      ],
+      "top1_acc": 1.0,
+      "top3_acc": 1.0,
+      "top5_acc": 0.6,
+      "elapsed_ms": 0.26
+    },
+    {
+      "scenario": "ES: prefix='perr' ctx='-'",
+      "current": "perr",
+      "previous": null,
+      "expected": [
+        "perro",
+        "perra",
+        "perrito"
+      ],
+      "got": [
+        "perro",
+        "perra",
+        "perry",
+        "perrito",
+        "perros"
+      ],
+      "top1_acc": 1.0,
+      "top3_acc": 0.6666666666666666,
+      "top5_acc": 1.0,
+      "elapsed_ms": 0.06
+    },
+    {
+      "scenario": "ES: prefix='gato' ctx='-'",
+      "current": "gato",
+      "previous": null,
+      "expected": [
+        "gato"
+      ],
+      "got": [
+        "gato",
+        "gatos"
+      ],
+      "top1_acc": 1.0,
+      "top3_acc": 1.0,
+      "top5_acc": 1.0,
+      "elapsed_ms": 0.02
+    },
+    {
+      "scenario": "ES: prefix='comput' ctx='-'",
+      "current": "comput",
+      "previous": null,
+      "expected": [
+        "computadora",
+        "computador",
+        "computación"
+      ],
+      "got": [
+        "computador",
+        "computación",
+        "computadora",
+        "computadoras"
+      ],
+      "top1_acc": 1.0,
+      "top3_acc": 1.0,
+      "top5_acc": 1.0,
+      "elapsed_ms": 0.07
+    },
+    {
+      "scenario": "ES: prefix='' ctx='la'",
+      "current": "",
+      "previous": "la",
+      "expected": [
+        "casa",
+        "vida",
+        "mujer"
+      ],
+      "got": [
+        "casa",
+        "vida",
+        "mujer",
+        "ciudad",
+        "familia"
+      ],
+      "top1_acc": 1.0,
+      "top3_acc": 1.0,
+      "top5_acc": 1.0,
+      "elapsed_ms": 0.0
+    },
+    {
+      "scenario": "ES: prefix='' ctx='el'",
+      "current": "",
+      "previous": "el",
+      "expected": [
+        "amor",
+        "sol",
+        "día"
+      ],
+      "got": [
+        "amor",
+        "sol",
+        "día",
+        "año",
+        "mundo"
+      ],
+      "top1_acc": 1.0,
+      "top3_acc": 1.0,
+      "top5_acc": 1.0,
+      "elapsed_ms": 0.0
+    },
+    {
+      "scenario": "ES: prefix='' ctx='en'",
+      "current": "",
+      "previous": "en",
+      "expected": [
+        "el",
+        "la",
+        "los"
+      ],
+      "got": [
+        "el",
+        "la",
+        "los",
+        "las",
+        "un"
+      ],
+      "top1_acc": 1.0,
+      "top3_acc": 1.0,
+      "top5_acc": 1.0,
+      "elapsed_ms": 0.0
+    },
+    {
+      "scenario": "ES: prefix='' ctx='no'",
+      "current": "",
+      "previous": "no",
+      "expected": [
+        "es",
+        "se",
+        "hay"
+      ],
+      "got": [
+        "es",
+        "se",
+        "hay",
+        "puede",
+        "tiene"
+      ],
+      "top1_acc": 1.0,
+      "top3_acc": 1.0,
+      "top5_acc": 1.0,
+      "elapsed_ms": 0.0
+    },
+    {
+      "scenario": "ES: prefix='' ctx='muy'",
+      "current": "",
+      "previous": "muy",
+      "expected": [
+        "importante",
+        "grande",
+        "bueno"
+      ],
+      "got": [
+        "importante",
+        "grande",
+        "bueno",
+        "bien",
+        "fácil"
+      ],
+      "top1_acc": 1.0,
+      "top3_acc": 1.0,
+      "top5_acc": 1.0,
+      "elapsed_ms": 0.0
+    },
+    {
+      "scenario": "ES: prefix='' ctx='y'",
+      "current": "",
+      "previous": "y",
+      "expected": [
+        "el",
+        "la",
+        "los"
+      ],
+      "got": [
+        "el",
+        "la",
+        "los",
+        "las",
+        "su"
+      ],
+      "top1_acc": 1.0,
+      "top3_acc": 1.0,
+      "top5_acc": 1.0,
+      "elapsed_ms": 0.0
+    },
+    {
+      "scenario": "ES: prefix='haser' ctx='-'",
+      "current": "haser",
+      "previous": null,
+      "expected": [
+        "hacer",
+        "has"
+      ],
+      "got": [
+        "hacer",
+        "haber",
+        "así",
+        "amor",
+        "las"
+      ],
+      "top1_acc": 1.0,
+      "top3_acc": 0.5,
+      "top5_acc": 0.5,
+      "elapsed_ms": 23.64
+    },
+    {
+      "scenario": "ES: prefix='bueno' ctx='-'",
+      "current": "bueno",
+      "previous": null,
+      "expected": [
+        "bueno",
+        "buena"
+      ],
+      "got": [
+        "bueno",
+        "buenos"
+      ],
+      "top1_acc": 1.0,
+      "top3_acc": 0.5,
+      "top5_acc": 0.5,
+      "elapsed_ms": 0.04
+    },
+    {
+      "scenario": "ES: prefix='coche' ctx='-'",
+      "current": "coche",
+      "previous": null,
+      "expected": [
+        "coche"
+      ],
+      "got": [
+        "coche",
+        "coches"
+      ],
+      "top1_acc": 1.0,
+      "top3_acc": 1.0,
+      "top5_acc": 1.0,
+      "elapsed_ms": 0.02
+    },
+    {
+      "scenario": "ES: prefix='jente' ctx='-'",
+      "current": "jente",
+      "previous": null,
+      "expected": [
+        "gente"
+      ],
+      "got": [
+        "gente",
+        "mente",
+        "desde",
+        "debe",
+        "dentro"
+      ],
+      "top1_acc": 1.0,
+      "top3_acc": 1.0,
+      "top5_acc": 1.0,
+      "elapsed_ms": 24.16
+    },
+    {
+      "scenario": "ES: prefix='pais' ctx='-'",
+      "current": "pais",
+      "previous": null,
+      "expected": [
+        "país",
+        "pies"
+      ],
+      "got": [
+        "pais",
+        "paisaje"
+      ],
+      "top1_acc": 0.0,
+      "top3_acc": 0.0,
+      "top5_acc": 0.0,
+      "elapsed_ms": 0.04
+    }
+  ],
+  "stress": [
+    {
+      "scenario": "stress('', prev=None)",
+      "iterations": 100,
+      "min_ms": 5.27,
+      "max_ms": 16.97,
+      "avg_ms": 6.06,
+      "median_ms": 5.78,
+      "p95_ms": 7.23
+    },
+    {
+      "scenario": "stress('a', prev=None)",
+      "iterations": 100,
+      "min_ms": 3.22,
+      "max_ms": 3.65,
+      "avg_ms": 3.38,
+      "median_ms": 3.36,
+      "p95_ms": 3.62
+    },
+    {
+      "scenario": "stress('th', prev=None)",
+      "iterations": 100,
+      "min_ms": 0.5,
+      "max_ms": 0.63,
+      "avg_ms": 0.53,
+      "median_ms": 0.53,
+      "p95_ms": 0.57
+    },
+    {
+      "scenario": "stress('z', prev=None)",
+      "iterations": 100,
+      "min_ms": 0.08,
+      "max_ms": 0.12,
+      "avg_ms": 0.08,
+      "median_ms": 0.08,
+      "p95_ms": 0.09
+    },
+    {
+      "scenario": "stress('developm', prev=None)",
+      "iterations": 100,
+      "min_ms": 0.06,
+      "max_ms": 0.08,
+      "avg_ms": 0.06,
+      "median_ms": 0.06,
+      "p95_ms": 0.07
+    },
+    {
+      "scenario": "stress('', prev=the)",
+      "iterations": 100,
+      "min_ms": 0.0,
+      "max_ms": 0.0,
+      "avg_ms": 0.0,
+      "median_ms": 0.0,
+      "p95_ms": 0.0
+    },
+    {
+      "scenario": "stress('developm', prev=the)",
+      "iterations": 100,
+      "min_ms": 0.06,
+      "max_ms": 0.14,
+      "avg_ms": 0.07,
+      "median_ms": 0.06,
+      "p95_ms": 0.08
+    }
+  ],
+  "fuzzy_eval": [
+    {
+      "target": "the",
+      "input": "th",
+      "freq": 99899,
+      "has_context": false,
+      "lev_distance": 1,
+      "fuzzy_score": 81.2
+    },
+    {
+      "target": "they",
+      "input": "th",
+      "freq": 50000,
+      "has_context": false,
+      "lev_distance": 2,
+      "fuzzy_score": 65.6
+    },
+    {
+      "target": "thy",
+      "input": "th",
+      "freq": 100,
+      "has_context": false,
+      "lev_distance": 1,
+      "fuzzy_score": 10.0
+    },
+    {
+      "target": "home",
+      "input": "ho",
+      "freq": 8000,
+      "has_context": false,
+      "lev_distance": 2,
+      "fuzzy_score": 65.6
+    },
+    {
+      "target": "how",
+      "input": "ho",
+      "freq": 15000,
+      "has_context": false,
+      "lev_distance": 1,
+      "fuzzy_score": 81.2
+    },
+    {
+      "target": "receive",
+      "input": "recieve",
+      "freq": 5000,
+      "has_context": false,
+      "lev_distance": 2,
+      "fuzzy_score": 65.6
+    },
+    {
+      "target": "the",
+      "input": "teh",
+      "freq": 99899,
+      "has_context": false,
+      "lev_distance": 2,
+      "fuzzy_score": 65.6
+    },
+    {
+      "target": "i",
+      "input": "",
+      "freq": 99999,
+      "has_context": true,
+      "lev_distance": 1,
+      "fuzzy_score": 81.2
+    }
+  ]
+}

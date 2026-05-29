@@ -99,6 +99,14 @@ class Predictor:
                 if debug_enabled():
                     log('predictor', 'engine/predictor.py', 'predict', 'predict.bigram.hit', {'previous_word': previous_word, 'candidate_count': len(suggestions), 'top': res})
                 return res
+            else:
+                # Fallback: si el bigrama no existe para esta palabra, sugerir palabras más frecuentes
+                all_words = self.trie.search_prefix('')
+                if all_words:
+                    res = [w for w, f in all_words[:top_k]]
+                    if debug_enabled():
+                        log('predictor', 'engine/predictor.py', 'predict', 'predict.bigram.miss.fallback', {'previous_word': previous_word, 'top': res})
+                    return res
                 
         # Si se ha escrito parte de una palabra, buscar por prefijo
         if current_word:
@@ -121,7 +129,7 @@ class Predictor:
                 all_words = self.trie.search_prefix('')
                 if all_words:
                     # Tomar las palabras más frecuentes para rendimiento
-                    top_candidates = all_words[:500]
+                    top_candidates = all_words[:2000]
                     fuzzy_results = []
                     scorer = FuzzyScorer()
                     for word, freq in top_candidates:
@@ -134,8 +142,8 @@ class Predictor:
         if debug_enabled():
             log('predictor', 'engine/predictor.py', 'predict', 'predict.result', {'final_suggestions': suggestions, 'count': len(suggestions)})
         
-        # Fallback: si no hay sugerencias, devolver las palabras más frecuentes similares
-        if not suggestions and not current_word and not previous_word:
+        # Fallback: si no hay sugerencias, devolver las palabras más frecuentes
+        if not suggestions:
             all_words = self.trie.search_prefix('')
             if all_words:
                 suggestions = [w for w, f in all_words[:top_k]]

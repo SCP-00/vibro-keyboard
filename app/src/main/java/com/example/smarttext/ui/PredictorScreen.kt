@@ -8,6 +8,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import android.util.Log
 import com.chaquo.python.Python
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -95,24 +96,29 @@ fun PredictorScreen() {
                 onValueChange = { newText ->
                     text = newText
                     // Extract current word and previous word for context-aware prediction
-                    val words = newText.trim().split(" ")
+                    // NO trim() - preserve trailing space to detect bigram boundary
+                    val words = newText.split(" ")
                     val currentWord = if (words.isNotEmpty() && newText.isNotEmpty()) words.last() else ""
                     val previousWord = if (words.size >= 2) words[words.size - 2] else null
 
                     if (predictor != null && currentWord.isNotEmpty()) {
+                        // Prefix prediction with optional bigram context
                         try {
-                                    // Pass empty string for previous_word when null (Python treats "" as falsy)
                             val result = predictor.callAttr("predict", currentWord, previousWord ?: "", 3)
                             suggestions = result.asList().map { it.toString() }
+                            Log.d("SmartText", "Prefix predict: '$currentWord' ctx='${previousWord ?: ""}' -> $suggestions")
                         } catch (e: Exception) {
+                            Log.e("SmartText", "Predict error", e)
                             suggestions = emptyList()
                         }
                     } else if (predictor != null && previousWord != null && currentWord.isEmpty()) {
                         // Context-only: suggest bigrams for previous word
                         try {
-                            suggestions = predictor.callAttr("predict", "", previousWord, 3)
-                                .asList().map { it.toString() }
-                        } catch (_: Exception) {
+                            val raw = predictor.callAttr("predict", "", previousWord, 3)
+                            suggestions = raw.asList().map { it.toString() }
+                            Log.d("SmartText", "Bigram predict: '' ctx='$previousWord' -> $suggestions")
+                        } catch (e: Exception) {
+                            Log.e("SmartText", "Bigram predict error", e)
                             suggestions = emptyList()
                         }
                     } else {

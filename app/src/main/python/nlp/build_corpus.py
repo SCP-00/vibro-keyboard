@@ -8,13 +8,17 @@ random associations, making the predictive text more useful.
 """
 
 import json
+import math
+import os
 import urllib.request
 import re
 from collections import defaultdict
 
 # URLs for word lists
+# English: Google 10000 word list (frequency-ordered, no swears)
 URL_EN_WORDS = "https://raw.githubusercontent.com/first20hours/google-10000-english/master/google-10000-english-no-swears.txt"
-URL_ES_WORDS = "https://raw.githubusercontent.com/javierarce/palabras/master/listado-general.txt"
+# Spanish: FrequencyWords 50k (frequency-ordered, real usage counts)
+URL_ES_WORDS = "https://raw.githubusercontent.com/hermitdave/FrequencyWords/master/content/2016/es/es_50k.txt"
 
 # ─── Common English bigrams (word → [(following_word, relative_frequency)]) ───
 # These represent real grammatical patterns in English
@@ -287,30 +291,64 @@ SPANISH_BIGRAMS = {
 }
 
 
-def fetch_words(url, encoding='utf-8'):
-    """Fetch words from a URL and return as a list."""
+def fetch_words(url, encoding='utf-8', has_frequencies=False):
+    """Fetch words from a URL and return as a list.
+    
+    If has_frequencies=True, the file is expected to be in 'word frequency' format
+    (like FrequencyWords format), and we extract both.
+    Returns: list of (word, frequency) tuples if has_frequencies, else list of words.
+    """
     try:
         response = urllib.request.urlopen(url)
         content = response.read().decode(encoding)
-        words = [w.strip().lower() for w in content.split('\n') if w.strip()]
-        return words
+        lines = [w.strip() for w in content.split('\n') if w.strip()]
+        
+        if has_frequencies:
+            result = []
+            for line in lines:
+                parts = line.split(' ')
+                if len(parts) >= 2:
+                    word = parts[0].strip().lower()
+                    try:
+                        freq = int(parts[1])
+                        result.append((word, freq))
+                    except ValueError:
+                        result.append((word, 1))
+            return result
+        else:
+            return [w.strip().lower() for w in lines]
     except Exception as e:
         print(f"Error fetching {url}: {e}")
         return []
 
 
-def build_unigrams(words, url):
-    """Build unigram dictionary with Zipfian-like frequency distribution."""
+def build_unigrams(words, url, has_frequencies=False):
+    """Build unigram dictionary with frequency distribution.
+    
+    If has_frequencies=True, uses the real frequencies from the wordlist.
+    Otherwise, applies Zipfian-like distribution based on rank.
+    """
     unigrams = {}
-    for i, w in enumerate(words):
-        if not re.match(r'^[a-záéíóúñü]+$', w):
-            continue
-        # Zipfian-like distribution: freq ∝ 1/(rank+1)
-        rank = i + 1
-        freq = max(1, int(100000 / max(rank, 1)) - rank)
-        # Ensure reasonable range
-        freq = max(1, min(10000, freq))
-        unigrams[w] = freq
+    
+    if has_frequencies:
+        # Use real frequencies from the wordlist
+        for word, freq in words:
+            if not re.match(r'^[a-záéíóúñü]+$', word):
+                continue
+            # Normalize to reasonable range (1-10000)
+            # log-scale normalization
+            normalized = max(1, min(10000, int(math.log10(freq + 1) * 2000)))
+            unigrams[word] = normalized
+    else:
+        for i, w in enumerate(words):
+            if not re.match(r'^[a-záéíóúñü]+$', w):
+                continue
+            # Zipfian-like distribution: freq ∝ 1/(rank+1)
+            rank = i + 1
+            freq = max(1, int(100000 / max(rank, 1)) - rank)
+            # Ensure reasonable range
+            freq = max(1, min(10000, freq))
+            unigrams[w] = freq
     return unigrams
 
 
@@ -337,7 +375,7 @@ def build_bigrams(unigrams, bigram_patterns):
     return bigrams
 
 
-def _ensure_common_words(unigrams, bigram_patterns, base_freq=5000):
+def _ensure_common_words(unigrams, bigram_patterns, base_freq=5000, extra_words=None):
     """Ensure common function words used as bigram heads exist in unigrams."""
     for word in bigram_patterns:
         if word not in unigrams:
@@ -347,14 +385,47 @@ def _ensure_common_words(unigrams, bigram_patterns, base_freq=5000):
         for follower, _ in followers:
             if follower not in unigrams:
                 unigrams[follower] = 1000
+    # Add extra common words not in the corpus
+    if extra_words:
+        for word, freq in extra_words:
+            if word not in unigrams:
+                unigrams[word] = freq
     return unigrams
+
+
+# Common Spanish words that may not appear in frequency wordlists
+EXTRA_ES_WORDS = [
+    ("perro", 3000), ("perra", 2000), ("perrito", 1000),
+    ("gato", 3000), ("gata", 2000),
+    ("casa", 5000), ("caso", 3000), ("casi", 2000),
+    ("computadora", 2000), ("computador", 1000), ("computación", 1000),
+    ("coche", 2000), ("carro", 2000),
+    ("gente", 4000),
+    ("país", 2000),
+    ("bueno", 3000), ("buena", 2000),
+    ("hacer", 4000),
+    ("mundo", 3000), ("año", 3000), ("día", 3000),
+    ("noche", 2000), ("tarde", 2000), ("mañana", 2000),
+    ("amor", 3000), ("vida", 4000),
+    ("tiempo", 3000), ("cosa", 3000),
+    ("hombre", 3000), ("mujer", 3000),
+    ("niño", 2000), ("niña", 2000),
+    ("amigo", 2000), ("familia", 3000),
+    ("trabajo", 3000), ("escuela", 2000),
+    ("agua", 2000), ("fuego", 1000),
+    ("libro", 2000), ("mesa", 1500),
+    ("grande", 2000), ("pequeño", 1500),
+    ("siempre", 2000), ("nunca", 1500),
+    ("gracias", 3000), ("por favor", 2000),
+    ("hola", 3000), ("adiós", 2000),
+]
 
 
 def build_corpus():
     """Build the complete bilingual corpus."""
     print("Building English corpus...")
-    en_words = fetch_words(URL_EN_WORDS)
-    en_unigrams = build_unigrams(en_words, URL_EN_WORDS)
+    en_words = fetch_words(URL_EN_WORDS, has_frequencies=False)
+    en_unigrams = build_unigrams(en_words, URL_EN_WORDS, has_frequencies=False)
     en_unigrams = _ensure_common_words(en_unigrams, ENGLISH_BIGRAMS)
     print(f"  {len(en_unigrams)} English unigrams")
 
@@ -362,13 +433,14 @@ def build_corpus():
     en_bigrams = build_bigrams(en_unigrams, ENGLISH_BIGRAMS)
     print(f"  {len(en_bigrams)} English bigram heads")
 
-    print("Building Spanish corpus...")
-    es_words = fetch_words(URL_ES_WORDS)
-    es_unigrams = build_unigrams(es_words, URL_ES_WORDS)
-    # Keep top 10000 Spanish words
+    print("Building Spanish corpus (frequency-ordered)...")
+    es_words = fetch_words(URL_ES_WORDS, has_frequencies=True)
+    print(f"  Fetched {len(es_words)} Spanish word-frequency pairs")
+    es_unigrams = build_unigrams(es_words, URL_ES_WORDS, has_frequencies=True)
+    # Keep top 10000 Spanish words by frequency
     es_unigrams = dict(sorted(es_unigrams.items(), key=lambda x: x[1], reverse=True)[:10000])
     # Ensure all bigram-related words exist
-    es_unigrams = _ensure_common_words(es_unigrams, SPANISH_BIGRAMS, base_freq=5000)
+    es_unigrams = _ensure_common_words(es_unigrams, SPANISH_BIGRAMS, base_freq=5000, extra_words=EXTRA_ES_WORDS)
     print(f"  {len(es_unigrams)} Spanish unigrams")
 
     print("Building Spanish bigrams...")
@@ -386,11 +458,20 @@ def build_corpus():
         }
     }
 
+    # Save to BOTH locations for compatibility
+    # Primary: engine/corpus.json (used by the predictor at runtime)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    engine_path = os.path.join(script_dir, "..", "engine", "corpus.json")
+    
+    with open(engine_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False)
+    
+    # Also save to current directory for local testing
     output_path = "corpus.json"
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False)
 
-    print(f"\nCorpus saved to {output_path}")
+    print(f"\nCorpus saved to {engine_path} and {output_path}")
     print(f"English: {len(en_unigrams)} words, {sum(len(v) for v in en_bigrams.values())} bigrams")
     print(f"Spanish: {len(es_unigrams)} words, {sum(len(v) for v in es_bigrams.values())} bigrams")
 
