@@ -146,8 +146,10 @@ O desde la interfaz de usuario:
 | `onCreate()` | ✅ Llamado |
 | `onBindInput()` | ✅ Vinculado a campo de texto |
 | `onStartInput()` | ✅ Input iniciado |
-| `onCreateInputView()` | ⚠️ Pendiente (diagnóstico en curso) |
-| `onStartInputView()` | ⚠️ Pendiente (depende de anterior) |
+| `onCreateInputView()` | ✅ Vista del teclado creada |
+| `onStartInputView()` | ✅ Vista iniciada (renderizado visual pendiente) |
+| `onMeasure()` | ✅ 720x1232 dimensiones correctas |
+| `onSizeChanged()` | ✅ Layout recalculado |
 
 ### Predicciones Verificadas
 
@@ -163,6 +165,77 @@ O desde la interfaz de usuario:
 |----------|--------|
 | **Debug** | **~12.1 MB** |
 | **Release** | **~8.2 MB** |
+
+
+---
+
+## 📊 Cobertura del Código
+
+### Resumen General
+
+| Componente | Archivos | Líneas | Tests Unitarios | Tests Instrumentados | Cobertura Automatizada |
+|------------|----------|--------|-----------------|---------------------|------------------------|
+| **PredictorEngine** | 1 | ~220 | 0 | 0 | **0%** |
+| **FuzzyScorer** | 1 | ~150 | 0 | 0 | **0%** |
+| **GestureRecognizer** | 1 | ~265 | 0 | 0 | **0%** |
+| **KeyboardData** | 1 | ~125 | 0 | 0 | **0%** |
+| **SmartKeyboardView** | 1 | ~345 | 0 | 0 | **0%** |
+| **SmartIME** | 1 | ~175 | 0 | 0 | **0%** |
+| **UI (Compose)** | 3 | ~245 | 0 | 0 | **0%** |
+| **Navigation + Theme** | 5 | ~85 | 0 | 0 | **0%** |
+| **Total App** | **14** | **~1,595** | **0** | **0** | **0%** |
+
+> ⚠️ Los directorios `app/src/test/` y `app/src/androidTest/` están vacíos. No existen tests automatizados en el proyecto.
+
+### Funcionalidades Verificadas en Emulador (Cobertura ~35%)
+
+Aunque no hay tests unitarios, se verificaron **10 de 28 funcionalidades** mediante pruebas manuales en emulador Android API 36:
+
+| Funcionalidad | Método de Verificación |
+|---------------|------------------------|
+| ✅ Inicialización del PredictorEngine | Logs de `adb logcat` — `Corpus loaded: 10004 words` |
+| ✅ Carga de corpus JSON desde assets | Logs — `PredictorEngine initialized: lang=es, words=10004` |
+| ✅ Registro como IME del sistema | `adb shell ime list -a` — SmartIME visible |
+| ✅ IME habilitado y establecido como default | `adb shell ime enable` + `ime set` exitosos |
+| ✅ Ciclo de vida onCreate → onStartInput | Logs de logcat: `onCreate → onBind → onStart` |
+| ✅ `onCreateInputView()` forzado | `onEvaluateInputViewShown() = true` — logs verificados |
+| ✅ `onMeasure()` con dimensiones correctas | Logs: `onMeasure: 720x1232` |
+| ✅ `onSizeChanged()` con layout recalculado | Logs: `onSizeChanged: 720x1232` |
+| ✅ Compilación debug y release | `./gradlew assembleDebug/assembleRelease` — `BUILD SUCCESSFUL` |
+| ✅ Instalación en emulador API 36 | `adb install` — `Success` |
+
+### Funcionalidades NO Cubiertas
+
+| Funcionalidad | Riesgo | Estado |
+|---------------|--------|--------|
+| ❌ Precisión de predicción (top-1, top-3) | Alto | Validación manual parcial |
+| ❌ Scoring difuso (FuzzyScorer.evaluateRules) | Alto | Sin validación |
+| ❌ Distancia Levenshtein en casos extremos | Medio | Sin validación |
+| ❌ Bigramas contextuales | Medio | Sin validación |
+| ❌ Reconocimiento de gestos (swipe) | Alto | Sin validación |
+| ❌ Renderizado visual del teclado en pantalla | Alto | Sin validación |
+| ❌ Persistencia de user_data.json | Medio | Sin validación |
+| ❌ Cambio de idioma (ES ↔ EN) | Medio | Sin validación |
+| ❌ Shift mode y shift lock | Bajo | Sin validación |
+| ❌ Manejo de errores (corpus corrupto) | Bajo | Sin validación |
+| ❌ Concurrencia (@Synchronized en multi-thread) | Medio | Sin validación |
+
+### Recomendaciones para Mejorar la Cobertura
+
+1. **Tests unitarios prioritarios** (80% del valor con 20% del esfuerzo):
+   - `FuzzyScorer.getScore()` — probar las 7 reglas difusas y casos edge
+   - `PredictorEngine.searchPrefix()` — probar búsqueda binaria con prefijos existentes/inexistentes
+   - `PredictorEngine.predict()` — probar los 4 caminos de predicción (bigrama, prefijo, Levenshtein, fallback)
+   - `GestureRecognizer.levenshtein()` — probar strings vacíos, iguales, completamente diferentes
+
+2. **Tests instrumentados** (requieren emulador):
+   - `SmartIME.commitText()` → verificar `InputConnection`
+   - `SmartKeyboardView.onTouchEvent()` → simular taps y swipes
+
+3. **Framework ya disponible** (en `libs.versions.toml`):
+   - ✅ JUnit 4 para tests unitarios
+   - ✅ Kotlin Coroutines Test para tests con corrutinas
+   - ❌ **Faltante:** MockK para mockear dependencias Android (Context, InputConnection)
 
 ---
 
