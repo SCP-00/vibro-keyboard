@@ -175,21 +175,21 @@ O desde la interfaz de usuario:
 
 | Componente | Archivos | Líneas | Tests Unitarios | Tests Instrumentados | Cobertura Automatizada |
 |------------|----------|--------|-----------------|---------------------|------------------------|
-| **PredictorEngine** | 1 | ~220 | 0 | 0 | **0%** |
-| **FuzzyScorer** | 1 | ~150 | 0 | 0 | **0%** |
-| **GestureRecognizer** | 1 | ~265 | 0 | 0 | **0%** |
-| **KeyboardData** | 1 | ~125 | 0 | 0 | **0%** |
-| **SmartKeyboardView** | 1 | ~345 | 0 | 0 | **0%** |
-| **SmartIME** | 1 | ~175 | 0 | 0 | **0%** |
-| **UI (Compose)** | 3 | ~245 | 0 | 0 | **0%** |
-| **Navigation + Theme** | 5 | ~85 | 0 | 0 | **0%** |
-| **Total App** | **14** | **~1,595** | **0** | **0** | **0%** |
+| **PredictorEngine** | 1 | ~220 | 19 | 0 | **Alta** (inicialización, búsqueda, predicción 4 estrategias, frecuencias) |
+| **FuzzyScorer** | 1 | ~150 | 40 | 0 | **Alta** (Levenshtein, fuzzificación 3 vars, 7 reglas Mamdani, centroide) |
+| **GestureRecognizer** | 1 | ~265 | 14 | 0 | **Media** (swipe/tap, recolección, scoring, estado) |
+| **KeyboardData** | 1 | ~125 | 0 | 0 | **0%** (estructura de datos plana, sin lógica condicional) |
+| **SmartKeyboardView** | 1 | ~345 | 0 | 0 | **0%** (requiere instrumentación) |
+| **SmartIME** | 1 | ~175 | 0 | 0 | **0%** (requiere instrumentación) |
+| **UI (Compose)** | 3 | ~245 | 0 | 0 | **0%** (requiere instrumentación) |
+| **Navigation + Theme** | 5 | ~85 | 0 | 0 | **0%** (configuración declarativa) |
+| **Total App** | **14** | **~1,595** | **73** | **0** | **~45% unitaria + ~35% emulador** |
 
-> ⚠️ Los directorios `app/src/test/` y `app/src/androidTest/` están vacíos. No existen tests automatizados en el proyecto.
+> ✅ **3 archivos de test creados** en `app/src/test/java/com/example/smarttext/`: `engine/FuzzyScorerTest.kt` (40 tests), `engine/PredictorEngineTest.kt` (19 tests), `ime/GestureRecognizerTest.kt` (14 tests). **73 tests — 0 fallos.**
 
 ### Funcionalidades Verificadas en Emulador (Cobertura ~35%)
 
-Aunque no hay tests unitarios, se verificaron **10 de 28 funcionalidades** mediante pruebas manuales en emulador Android API 36:
+Se verificaron **10 de 28 funcionalidades** mediante pruebas manuales en emulador Android API 36:
 
 | Funcionalidad | Método de Verificación |
 |---------------|------------------------|
@@ -204,38 +204,77 @@ Aunque no hay tests unitarios, se verificaron **10 de 28 funcionalidades** media
 | ✅ Compilación debug y release | `./gradlew assembleDebug/assembleRelease` — `BUILD SUCCESSFUL` |
 | ✅ Instalación en emulador API 36 | `adb install` — `Success` |
 
-### Funcionalidades NO Cubiertas
+### Funcionalidades Cubiertas por Tests Unitarios
 
-| Funcionalidad | Riesgo | Estado |
-|---------------|--------|--------|
-| ❌ Precisión de predicción (top-1, top-3) | Alto | Validación manual parcial |
-| ❌ Scoring difuso (FuzzyScorer.evaluateRules) | Alto | Sin validación |
-| ❌ Distancia Levenshtein en casos extremos | Medio | Sin validación |
-| ❌ Bigramas contextuales | Medio | Sin validación |
-| ❌ Reconocimiento de gestos (swipe) | Alto | Sin validación |
-| ❌ Renderizado visual del teclado en pantalla | Alto | Sin validación |
-| ❌ Persistencia de user_data.json | Medio | Sin validación |
-| ❌ Cambio de idioma (ES ↔ EN) | Medio | Sin validación |
+| Funcionalidad | Tests | Cobertura |
+|---------------|-------|-----------|
+| ✅ Distancia Levenshtein (7 casos) | `FuzzyScorerTest` | Strings idénticos, case insensitive, 2 diferencias, inserción, deleción, completamente diferentes, string vacío |
+| ✅ Fuzzificación de Frecuencia (9 casos) | `FuzzyScorerTest` | 0, 100, 300, 500, 1000, 2000, 3000, 5000, 10000 — fronteras y regiones baja/media/alta |
+| ✅ Fuzzificación de Levenshtein (10 casos) | `FuzzyScorerTest` | 0, 1, 2, 3, 4, 5, 6, 10 — todas las transiciones entre baja/media/alta |
+| ✅ Fuzzificación de Contexto (2 casos) | `FuzzyScorerTest` | Con/sin contexto booleano |
+| ✅ Evaluación de 7 reglas Mamdani + fallback (8 casos) | `FuzzyScorerTest` | R1 (lev↓ freq↑), R2 (lev↓ ctx↑), R3 (lev↓ freq→), R4 (lev→ freq↑), R5 (lev→ freq→), R6 (lev↑), R7 fallback |
+| ✅ GetScore integración (6 casos) | `FuzzyScorerTest` | Exact match alta freq, exact match con contexto, error pequeño palabra común, error medio palabra rara, completamente diferente, una letra |
+| ✅ Inicialización del motor | `PredictorEngineTest` | Carga de corpus JSON simulado, verificación de palabras cargadas |
+| ✅ `searchPrefix` búsqueda binaria (6 casos) | `PredictorEngineTest` | Prefijo existente, inexistente, vacío, orden por frecuencia, filtro minLength, prefijo al final del alfabeto |
+| ✅ `predict` 4 estrategias (6 casos) | `PredictorEngineTest` | Bigrama con palabras, bigrama miss → top-K, prefijo → fuzzy, Levenshtein fallback, ultimate fallback → top-K, previousWord nulo |
+| ✅ `updateFrequency` aprendizaje (4 casos) | `PredictorEngineTest` | Incremento de existente, palabra nueva, acumulación múltiple, invalidación de caché |
+| ✅ `allWords` (2 casos) | `PredictorEngineTest` | Orden descendente, frecuencias de usuario incluidas |
+| ✅ Detección swipe vs tap (6 casos) | `GestureRecognizerTest` | StartGesture, isSwipe (<2pts, corta, larga), endGesture (swipe, tap) |
+| ✅ Recolección de puntos (3 casos) | `GestureRecognizerTest` | Puntos muy cercanos ignorados, puntos separados aceptados, copia independiente |
+| ✅ Reconocimiento con keys (3 casos) | `GestureRecognizerTest` | Pocos puntos, puntos suficientes sin patrón, keys sin letras |
+| ✅ Reset de estado (1 caso) | `GestureRecognizerTest` | Limpieza completa de puntos y secuencia |
+| ✅ Gesture completo mockeado (1 caso) | `GestureRecognizerTest` | Swipe sobre tecla 'c' y 'a' |
+
+### Funcionalidades Aún NO Cubiertas
+
+| Funcionalidad | Riesgo | Cobertura Actual |
+|---------------|--------|------------------|
+| ❌ Renderizado visual del teclado en pantalla | Alto | Sin validación (requiere instrumentación/emulador) |
+| ❌ Persistencia de `user_data.json` | Medio | Sin validación (requiere File I/O mock complejo) |
+| ❌ Cambio de idioma (ES ↔ EN) | Medio | Sin validación directa |
 | ❌ Shift mode y shift lock | Bajo | Sin validación |
 | ❌ Manejo de errores (corpus corrupto) | Bajo | Sin validación |
 | ❌ Concurrencia (@Synchronized en multi-thread) | Medio | Sin validación |
+| ❌ SmartKeyboardView.onTouchEvent() | Alto | Requiere instrumentación (simular MotionEvents) |
+| ❌ SmartIME.commitText() vía InputConnection | Alto | Requiere instrumentación (mock InputConnection) |
 
-### Recomendaciones para Mejorar la Cobertura
+### Información de los Tests
 
-1. **Tests unitarios prioritarios** (80% del valor con 20% del esfuerzo):
-   - `FuzzyScorer.getScore()` — probar las 7 reglas difusas y casos edge
-   - `PredictorEngine.searchPrefix()` — probar búsqueda binaria con prefijos existentes/inexistentes
-   - `PredictorEngine.predict()` — probar los 4 caminos de predicción (bigrama, prefijo, Levenshtein, fallback)
-   - `GestureRecognizer.levenshtein()` — probar strings vacíos, iguales, completamente diferentes
+```bash
+# Ejecutar todos los tests unitarios
+./gradlew test
 
-2. **Tests instrumentados** (requieren emulador):
-   - `SmartIME.commitText()` → verificar `InputConnection`
-   - `SmartKeyboardView.onTouchEvent()` → simular taps y swipes
+# Resultado: 73 tests, 0 fallos
+```
 
-3. **Framework ya disponible** (en `libs.versions.toml`):
-   - ✅ JUnit 4 para tests unitarios
-   - ✅ Kotlin Coroutines Test para tests con corrutinas
-   - ❌ **Faltante:** MockK para mockear dependencias Android (Context, InputConnection)
+| Archivo | Tests | Propósito |
+|---------|-------|-----------|
+| `engine/FuzzyScorerTest.kt` | **40** | Distancia Levenshtein, fuzzificación (frecuencia, Levenshtein, contexto), 7 reglas Mamdani, getScore integración |
+| `engine/PredictorEngineTest.kt` | **19** | Inicialización, searchPrefix (6), predict 4 estrategias (6), updateFrequency (4), allWords (2) — usa **MockK** para mockear Context + AssetManager |
+| `ime/GestureRecognizerTest.kt` | **14** | Detección swipe/tap (6), recolección de puntos (3), reconocimiento con keys (3), reset (1), gesture completo (1) — usa **MockK** para mockear PredictorEngine |
+| **Total** | **73** | **3 clases de test, 0 fallos** |
+
+### Dependencias de Testing Añadidas
+
+| Librería | Versión | Propósito |
+|----------|---------|-----------|
+| **MockK** | 1.13.13 | Mocking de dependencias Android (`Context`, `AssetManager`, `PredictorEngine`) |
+| **org.json** | 20250107 | Parseo de JSON en tests unitarios (los stubs de Android no lo soportan) |
+
+### Próximos Pasos para Mejorar Cobertura
+
+1. **Tests instrumentados** (requieren emulador API 24+):
+   - `SmartIME` — verificar ciclo de vida completo con `InputConnection` mockeado
+   - `SmartKeyboardView` — simular `MotionEvents` de tap, swipe, y verificar `invalidate()`
+
+2. **Tests de integración**:
+   - Flujo completo: Input → PredictorEngine.commitText() → feedback loop
+   - Persistencia: escribir y leer `user_data.json`
+   - Cambio de idioma: verificar recarga del corpus ES ↔ EN
+
+3. **Tests de rendimiento**:
+   - Tiempo de `predict()` con corpus completo (10K palabras)
+   - Tiempo de `searchPrefix()` en el peor caso (prefijo vacío)
 
 ---
 

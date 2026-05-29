@@ -45,7 +45,7 @@ class GestureRecognizer {
     /** Start tracking a new gesture. */
     fun startGesture(x: Float, y: Float) {
         touchPoints.clear()
-        touchPoints.add(PointF(x, y))
+        touchPoints.add(createPoint(x, y))
         startTime = System.currentTimeMillis()
         lastKeySequence = emptyList()
     }
@@ -57,7 +57,7 @@ class GestureRecognizer {
         val dx = x - last.x
         val dy = y - last.y
         if (dx * dx + dy * dy < 25f) return
-        touchPoints.add(PointF(x, y))
+        touchPoints.add(createPoint(x, y))
     }
 
     /** End tracking. Returns true if the gesture is a swipe (not a tap). */
@@ -127,7 +127,7 @@ class GestureRecognizer {
                 val steps = (d / INTERPOLATION_STEP).toInt()
                 for (s in 1 until steps) {
                     val t = s.toFloat() / steps
-                    result.add(PointF(
+                    result.add(createPoint(
                         p1.x + (p2.x - p1.x) * t,
                         p1.y + (p2.y - p1.y) * t
                     ))
@@ -291,6 +291,14 @@ class GestureRecognizer {
             prev = curr
         }
         return prev[b.length]
+    }
+
+    /** Create a PointF with field-by-field assignment (works in Android stubs where constructor may not set fields). */
+    private fun createPoint(x: Float, y: Float): PointF {
+        val pt = PointF()
+        pt.x = x
+        pt.y = y
+        return pt
     }
 
     private fun dist(a: PointF, b: PointF): Float {
