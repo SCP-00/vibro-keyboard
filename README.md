@@ -242,8 +242,6 @@ Proyecto académico — Curso de Computación Blanda
 - **Rol:** Creador del concepto, arquitecto del sistema, desarrollador principal y propietario intelectual del proyecto
 - **GitHub:** [SCP-00](https://github.com/SCP-00)
 - **LinkedIn:** [buendia001](https://www.linkedin.com/in/buendia001)
-- **Email:** [v.buendiah@icloud.com](mailto:v.buendiah@icloud.com)
-- **WhatsApp:** +57 318 866 8312
 - **Telegram:** @Buendia_001
 
 > Estudiante de Ingeniería de Sistemas y Computación — UTP, Colombia
