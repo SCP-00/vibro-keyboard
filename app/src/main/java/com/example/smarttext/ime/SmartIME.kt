@@ -44,7 +44,27 @@ class SmartIME : InputMethodService() {
 
     override fun onCreate() {
         super.onCreate()
+        Log.d(TAG, "onCreate called")
         initPredictor()
+    }
+
+    override fun onBindInput() {
+        super.onBindInput()
+        Log.d(TAG, "onBindInput called")
+    }
+
+    override fun onStartInput(attribute: EditorInfo?, restarting: Boolean) {
+        super.onStartInput(attribute, restarting)
+        Log.d(TAG, "onStartInput called, restarting=$restarting")
+        if (attribute != null) {
+            Log.d(TAG, "onStartInput: inputType=${attribute.inputType}, imeOptions=${attribute.imeOptions}, packageName=${attribute.packageName}, fieldId=${attribute.fieldId}")
+            val cls = attribute.inputType and android.text.InputType.TYPE_MASK_CLASS
+            val variation = attribute.inputType and android.text.InputType.TYPE_MASK_VARIATION
+            Log.d(TAG, "onStartInput: class=$cls, variation=$variation, TYPE_CLASS_TEXT=${android.text.InputType.TYPE_CLASS_TEXT}")
+        } else {
+            Log.d(TAG, "onStartInput: attribute is NULL")
+        }
+        Log.d(TAG, "onStartInput: isInputViewShown=${isInputViewShown}, isFullscreenMode=${isFullscreenMode}")
     }
 
     private fun initPredictor() {
@@ -66,14 +86,17 @@ class SmartIME : InputMethodService() {
     }
 
     override fun onCreateInputView(): View {
+        Log.d(TAG, "onCreateInputView called — creating keyboard view")
         val kbView = SmartKeyboardView(this, this).also { keyboardView = it }
         // Set predictor if already initialized
         predictor?.let { kbView.setPredictor(it) }
+        Log.d(TAG, "onCreateInputView returning view: ${kbView.width}x${kbView.height}")
         return kbView
     }
 
     override fun onStartInputView(editorInfo: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(editorInfo, restarting)
+        Log.d(TAG, "onStartInputView called, inputType=${editorInfo?.inputType}, restarting=$restarting")
         currentInputWord = ""
 
         // Adjust for different input types
@@ -92,11 +115,13 @@ class SmartIME : InputMethodService() {
 
     override fun onFinishInputView(finishingInput: Boolean) {
         super.onFinishInputView(finishingInput)
+        Log.d(TAG, "onFinishInputView called, finishing=$finishingInput")
         currentInputWord = ""
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        Log.d(TAG, "onDestroy called")
         scope.cancel()
         predictor = null
         keyboardView = null
