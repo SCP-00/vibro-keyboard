@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
-import com.example.smarttext.ui.PredictorScreen
+import com.example.smarttext.ui.SettingsScreen
 
 @Composable
 fun MainNavigation() {
@@ -16,7 +16,7 @@ fun MainNavigation() {
     entryProvider =
       entryProvider {
         entry<Main> {
-          PredictorScreen()
+          SettingsScreen()
         }
       },
   )
