@@ -44,3 +44,7 @@ Thumbs.db
 debug.keystore
 google-services.json
 *.txt~
+
+# Allow release APK files
+!releases/*.apk
+!releases/*.aab

@@ -5,13 +5,13 @@
       "top1": 16.0,
       "top3": 14.333333333333334,
       "times": [
-        0.63,
-        0.53,
+        0.58,
+        0.46,
         0.09,
-        1.0,
-        0.22,
+        0.86,
+        0.2,
         0.02,
-        0.6,
+        0.49,
         0.0,
         0.0,
         0.0,
@@ -19,41 +19,41 @@
         0.0,
         0.0,
         0.0,
-        2.03,
-        36.2,
-        19.48,
-        26.85,
-        30.58,
-        35.68,
-        28.03,
-        32.19,
-        28.14,
-        24.55,
-        24.67,
-        3.57,
-        2.0,
-        6.69
+        1.72,
+        5.47,
+        2.96,
+        4.24,
+        5.46,
+        6.46,
+        4.78,
+        5.98,
+        4.77,
+        3.92,
+        4.08,
+        3.33,
+        1.93,
+        0.0
       ]
     },
     "es": {
       "tests": 15,
-      "top1": 14.0,
+      "top1": 13.0,
       "top3": 12.666666666666666,
       "times": [
-        0.26,
+        0.24,
+        0.05,
+        0.02,
         0.06,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        5.61,
+        0.05,
         0.02,
-        0.07,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        23.64,
-        0.04,
-        0.02,
-        24.16,
+        4.05,
         0.04
       ]
     }
@@ -78,7 +78,7 @@
       "top1_acc": 1.0,
       "top3_acc": 1.0,
       "top5_acc": 1.0,
-      "elapsed_ms": 0.63
+      "elapsed_ms": 0.58
     },
     {
       "scenario": "EN: prefix='ho' ctx='-'",
@@ -94,12 +94,12 @@
         "how",
         "hotel",
         "hotels",
-        "homepage"
+        "holdings"
       ],
       "top1_acc": 1.0,
       "top3_acc": 1.0,
       "top5_acc": 0.6,
-      "elapsed_ms": 0.53
+      "elapsed_ms": 0.46
     },
     {
       "scenario": "EN: prefix='hel' ctx='-'",
@@ -115,11 +115,11 @@
         "helicopter",
         "helpful",
         "helping",
-        "helps"
+        "held"
       ],
       "top1_acc": 1.0,
       "top3_acc": 0.3333333333333333,
-      "top5_acc": 0.2,
+      "top5_acc": 0.4,
       "elapsed_ms": 0.09
     },
     {
@@ -135,13 +135,13 @@
         "company",
         "comments",
         "community",
-        "companies",
-        "companion"
+        "combination",
+        "combinations"
       ],
       "top1_acc": 1.0,
       "top3_acc": 0.6666666666666666,
       "top5_acc": 0.4,
-      "elapsed_ms": 1.0
+      "elapsed_ms": 0.86
     },
     {
       "scenario": "EN: prefix='wor' ctx='-'",
@@ -155,14 +155,14 @@
       "got": [
         "work",
         "world",
-        "worldwide",
-        "workshops",
-        "workstation"
+        "worcester",
+        "wordpress",
+        "workforce"
       ],
       "top1_acc": 1.0,
       "top3_acc": 0.6666666666666666,
       "top5_acc": 0.4,
-      "elapsed_ms": 0.22
+      "elapsed_ms": 0.2
     },
     {
       "scenario": "EN: prefix='peo' ctx='-'",
@@ -192,14 +192,14 @@
       "got": [
         "into",
         "international",
-        "internationally",
-        "internship",
-        "interested"
+        "integrate",
+        "integrated",
+        "integrating"
       ],
       "top1_acc": 1.0,
       "top3_acc": 0.6666666666666666,
       "top5_acc": 0.4,
-      "elapsed_ms": 0.6
+      "elapsed_ms": 0.49
     },
     {
       "scenario": "EN: prefix='' ctx='how'",
@@ -358,16 +358,16 @@
         "idea"
       ],
       "got": [
-        "im",
-        "ii",
+        "ia",
+        "ic",
         "id",
-        "ip",
-        "ie"
+        "ie",
+        "ii"
       ],
       "top1_acc": 0.0,
       "top3_acc": 0.0,
       "top5_acc": 0.0,
-      "elapsed_ms": 2.03
+      "elapsed_ms": 1.72
     },
     {
       "scenario": "EN: prefix='recieve' ctx='-'",
@@ -386,7 +386,7 @@
       "top1_acc": 0.0,
       "top3_acc": 0.0,
       "top5_acc": 0.0,
-      "elapsed_ms": 36.2
+      "elapsed_ms": 5.47
     },
     {
       "scenario": "EN: prefix='teh' ctx='-'",
@@ -401,13 +401,13 @@
         "are",
         "as",
         "was",
-        "of",
-        "on"
+        "a",
+        "and"
       ],
       "top1_acc": 0.0,
       "top3_acc": 0.0,
       "top5_acc": 0.0,
-      "elapsed_ms": 19.48
+      "elapsed_ms": 2.96
     },
     {
       "scenario": "EN: prefix='adress' ctx='-'",
@@ -427,7 +427,7 @@
       "top1_acc": 0.0,
       "top3_acc": 0.0,
       "top5_acc": 0.0,
-      "elapsed_ms": 26.85
+      "elapsed_ms": 4.24
     },
     {
       "scenario": "EN: prefix='calender' ctx='-'",
@@ -447,7 +447,7 @@
       "top1_acc": 0.0,
       "top3_acc": 0.0,
       "top5_acc": 0.0,
-      "elapsed_ms": 30.58
+      "elapsed_ms": 5.46
     },
     {
       "scenario": "EN: prefix='definately' ctx='-'",
@@ -467,7 +467,7 @@
       "top1_acc": 0.0,
       "top3_acc": 0.0,
       "top5_acc": 0.0,
-      "elapsed_ms": 35.68
+      "elapsed_ms": 6.46
     },
     {
       "scenario": "EN: prefix='beleive' ctx='-'",
@@ -487,7 +487,7 @@
       "top1_acc": 0.0,
       "top3_acc": 0.0,
       "top5_acc": 0.0,
-      "elapsed_ms": 28.03
+      "elapsed_ms": 4.78
     },
     {
       "scenario": "EN: prefix='goverment' ctx='-'",
@@ -507,7 +507,7 @@
       "top1_acc": 0.0,
       "top3_acc": 0.0,
       "top5_acc": 0.0,
-      "elapsed_ms": 32.19
+      "elapsed_ms": 5.98
     },
     {
       "scenario": "EN: prefix='occured' ctx='-'",
@@ -527,7 +527,7 @@
       "top1_acc": 0.0,
       "top3_acc": 0.0,
       "top5_acc": 0.0,
-      "elapsed_ms": 28.14
+      "elapsed_ms": 4.77
     },
     {
       "scenario": "EN: prefix='thier' ctx='-'",
@@ -547,7 +547,7 @@
       "top1_acc": 0.0,
       "top3_acc": 0.0,
       "top5_acc": 0.0,
-      "elapsed_ms": 24.55
+      "elapsed_ms": 3.92
     },
     {
       "scenario": "EN: prefix='wierd' ctx='-'",
@@ -567,7 +567,7 @@
       "top1_acc": 0.0,
       "top3_acc": 0.0,
       "top5_acc": 0.0,
-      "elapsed_ms": 24.67
+      "elapsed_ms": 4.08
     },
     {
       "scenario": "EN: prefix='a' ctx='-'",
@@ -588,7 +588,7 @@
       "top1_acc": 1.0,
       "top3_acc": 1.0,
       "top5_acc": 1.0,
-      "elapsed_ms": 3.57
+      "elapsed_ms": 3.33
     },
     {
       "scenario": "EN: prefix='i' ctx='-'",
@@ -609,7 +609,7 @@
       "top1_acc": 1.0,
       "top3_acc": 1.0,
       "top5_acc": 1.0,
-      "elapsed_ms": 2.0
+      "elapsed_ms": 1.93
     },
     {
       "scenario": "EN: prefix='' ctx='-'",
@@ -617,16 +617,16 @@
       "previous": null,
       "expected": [],
       "got": [
-        "the",
-        "to",
-        "of",
-        "on",
-        "a"
+        "a",
+        "and",
+        "for",
+        "in",
+        "is"
       ],
       "top1_acc": 0.0,
       "top3_acc": 1.0,
       "top5_acc": 1.0,
-      "elapsed_ms": 6.69
+      "elapsed_ms": 0.0
     },
     {
       "scenario": "ES: prefix='cas' ctx='-'",
@@ -639,15 +639,15 @@
       ],
       "got": [
         "casa",
-        "caso",
         "casi",
+        "caso",
         "casó",
         "case"
       ],
       "top1_acc": 1.0,
       "top3_acc": 1.0,
       "top5_acc": 0.6,
-      "elapsed_ms": 0.26
+      "elapsed_ms": 0.24
     },
     {
       "scenario": "ES: prefix='perr' ctx='-'",
@@ -668,7 +668,7 @@
       "top1_acc": 1.0,
       "top3_acc": 0.6666666666666666,
       "top5_acc": 1.0,
-      "elapsed_ms": 0.06
+      "elapsed_ms": 0.05
     },
     {
       "scenario": "ES: prefix='gato' ctx='-'",
@@ -704,7 +704,7 @@
       "top1_acc": 1.0,
       "top3_acc": 1.0,
       "top5_acc": 1.0,
-      "elapsed_ms": 0.07
+      "elapsed_ms": 0.06
     },
     {
       "scenario": "ES: prefix='' ctx='la'",
@@ -841,16 +841,16 @@
         "has"
       ],
       "got": [
-        "hacer",
         "haber",
-        "así",
+        "hacer",
         "amor",
-        "las"
+        "así",
+        "casa"
       ],
-      "top1_acc": 1.0,
+      "top1_acc": 0.0,
       "top3_acc": 0.5,
       "top5_acc": 0.5,
-      "elapsed_ms": 23.64
+      "elapsed_ms": 5.61
     },
     {
       "scenario": "ES: prefix='bueno' ctx='-'",
@@ -867,7 +867,7 @@
       "top1_acc": 1.0,
       "top3_acc": 0.5,
       "top5_acc": 0.5,
-      "elapsed_ms": 0.04
+      "elapsed_ms": 0.05
     },
     {
       "scenario": "ES: prefix='coche' ctx='-'",
@@ -894,15 +894,15 @@
       ],
       "got": [
         "gente",
-        "mente",
-        "desde",
+        "antes",
+        "cuenta",
         "debe",
         "dentro"
       ],
       "top1_acc": 1.0,
       "top3_acc": 1.0,
       "top5_acc": 1.0,
-      "elapsed_ms": 24.16
+      "elapsed_ms": 4.05
     },
     {
       "scenario": "ES: prefix='pais' ctx='-'",
@@ -926,53 +926,53 @@
     {
       "scenario": "stress('', prev=None)",
       "iterations": 100,
-      "min_ms": 5.27,
-      "max_ms": 16.97,
-      "avg_ms": 6.06,
-      "median_ms": 5.78,
-      "p95_ms": 7.23
+      "min_ms": 0.0,
+      "max_ms": 0.0,
+      "avg_ms": 0.0,
+      "median_ms": 0.0,
+      "p95_ms": 0.0
     },
     {
       "scenario": "stress('a', prev=None)",
       "iterations": 100,
-      "min_ms": 3.22,
-      "max_ms": 3.65,
-      "avg_ms": 3.38,
-      "median_ms": 3.36,
-      "p95_ms": 3.62
+      "min_ms": 2.88,
+      "max_ms": 5.57,
+      "avg_ms": 3.32,
+      "median_ms": 3.18,
+      "p95_ms": 4.4
     },
     {
       "scenario": "stress('th', prev=None)",
       "iterations": 100,
-      "min_ms": 0.5,
-      "max_ms": 0.63,
-      "avg_ms": 0.53,
-      "median_ms": 0.53,
-      "p95_ms": 0.57
+      "min_ms": 0.47,
+      "max_ms": 1.16,
+      "avg_ms": 0.57,
+      "median_ms": 0.51,
+      "p95_ms": 0.88
     },
     {
       "scenario": "stress('z', prev=None)",
       "iterations": 100,
-      "min_ms": 0.08,
-      "max_ms": 0.12,
-      "avg_ms": 0.08,
+      "min_ms": 0.07,
+      "max_ms": 0.24,
+      "avg_ms": 0.09,
       "median_ms": 0.08,
-      "p95_ms": 0.09
+      "p95_ms": 0.22
     },
     {
       "scenario": "stress('developm', prev=None)",
       "iterations": 100,
-      "min_ms": 0.06,
-      "max_ms": 0.08,
-      "avg_ms": 0.06,
+      "min_ms": 0.05,
+      "max_ms": 0.17,
+      "avg_ms": 0.07,
       "median_ms": 0.06,
-      "p95_ms": 0.07
+      "p95_ms": 0.13
     },
     {
       "scenario": "stress('', prev=the)",
       "iterations": 100,
       "min_ms": 0.0,
-      "max_ms": 0.0,
+      "max_ms": 0.01,
       "avg_ms": 0.0,
       "median_ms": 0.0,
       "p95_ms": 0.0
@@ -981,10 +981,10 @@
       "scenario": "stress('developm', prev=the)",
       "iterations": 100,
       "min_ms": 0.06,
-      "max_ms": 0.14,
+      "max_ms": 0.2,
       "avg_ms": 0.07,
       "median_ms": 0.06,
-      "p95_ms": 0.08
+      "p95_ms": 0.11
     }
   ],
   "fuzzy_eval": [
