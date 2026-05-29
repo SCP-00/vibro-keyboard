@@ -31,6 +31,7 @@ class SmartIME : InputMethodService() {
 
     companion object {
         private const val TAG = "SmartIME"
+        private const val DEBUG = true
     }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -56,15 +57,9 @@ class SmartIME : InputMethodService() {
     override fun onStartInput(attribute: EditorInfo?, restarting: Boolean) {
         super.onStartInput(attribute, restarting)
         Log.d(TAG, "onStartInput called, restarting=$restarting")
-        if (attribute != null) {
-            Log.d(TAG, "onStartInput: inputType=${attribute.inputType}, imeOptions=${attribute.imeOptions}, packageName=${attribute.packageName}, fieldId=${attribute.fieldId}")
-            val cls = attribute.inputType and android.text.InputType.TYPE_MASK_CLASS
-            val variation = attribute.inputType and android.text.InputType.TYPE_MASK_VARIATION
-            Log.d(TAG, "onStartInput: class=$cls, variation=$variation, TYPE_CLASS_TEXT=${android.text.InputType.TYPE_CLASS_TEXT}")
-        } else {
-            Log.d(TAG, "onStartInput: attribute is NULL")
+        if (DEBUG && attribute != null) {
+            Log.d(TAG, "onStartInput: inputType=${attribute.inputType}, imeOptions=${attribute.imeOptions}")
         }
-        Log.d(TAG, "onStartInput: isInputViewShown=${isInputViewShown}, isFullscreenMode=${isFullscreenMode}")
     }
 
     private fun initPredictor() {
@@ -128,6 +123,8 @@ class SmartIME : InputMethodService() {
     }
 
     override fun onEvaluateFullscreenMode(): Boolean = false
+
+    override fun onEvaluateInputViewShown(): Boolean = true
 
     // ─── InputConnection helpers ───
 

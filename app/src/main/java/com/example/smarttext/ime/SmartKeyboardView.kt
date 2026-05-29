@@ -156,10 +156,28 @@ class SmartKeyboardView(
 
     // ─── Layout ───
 
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        val width = MeasureSpec.getSize(widthMeasureSpec)
+        val height = MeasureSpec.getSize(heightMeasureSpec)
+        android.util.Log.d(TAG, "onMeasure: ${MeasureSpec.getMode(widthMeasureSpec)}x${MeasureSpec.getMode(heightMeasureSpec)} $width x $height")
+        if (width > 0 && height > 0) {
+            setMeasuredDimension(width, height)
+        } else {
+            // Fallback: use a reasonable default keyboard height
+            val defaultHeight = (300 * density).toInt()
+            setMeasuredDimension(
+                MeasureSpec.getSize(widthMeasureSpec).coerceAtLeast(720),
+                MeasureSpec.getSize(heightMeasureSpec).coerceAtLeast(defaultHeight)
+            )
+        }
+    }
+
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
+        android.util.Log.d(TAG, "onSizeChanged: $w x $h (old: $oldw x $oldh)")
         val keyAreaHeight = h - candidateStripHeight
         keys = KeyboardData.layoutKeys(keys, w.toFloat(), keyAreaHeight, topPadding = candidateStripHeight)
+        invalidate()
     }
 
     override fun onDraw(canvas: Canvas) {
