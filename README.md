@@ -235,7 +235,25 @@ Proyecto académico — Curso de Computación Blanda
 
 ---
 
-## 👥 Autor
+## 👥 Autores
 
-Desarrollado como proyecto final del curso de Computación Blanda.
-Sistema multi-agente orquestado por Codebuff AI.
+### Víctor Alejandro Buendía — Co-intelectual & Dueño del Repositorio
+
+- **Rol:** Creador del concepto, arquitecto del sistema, desarrollador principal y propietario intelectual del proyecto
+- **GitHub:** [SCP-00](https://github.com/SCP-00)
+- **LinkedIn:** [buendia001](https://www.linkedin.com/in/buendia001)
+- **Email:** [v.buendiah@icloud.com](mailto:v.buendiah@icloud.com)
+- **WhatsApp:** +57 318 866 8312
+- **Telegram:** @Buendia_001
+
+> Estudiante de Ingeniería de Sistemas y Computación — UTP, Colombia
+> Apasionado por la IA aplicada, sistemas MCP y automatización inteligente
+
+### Buffy (Codebuff AI) — Agente de Desarrollo Asistido
+
+- **Rol:** Implementación, optimización y documentación del código asistida por IA
+- **Framework:** Sistema multi-agente orquestado vía Codebuff AI
+
+---
+
+*Proyecto final del curso de Computación Blanda — Mayo 2026*

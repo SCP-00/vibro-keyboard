@@ -253,4 +253,19 @@ La primera carga (init del predictor) Chaquopy tiene que arrancar el intérprete
 
 ---
 
+## 👥 Autores
+
+### Víctor Alejandro Buendía — Co-intelectual & Dueño del Repositorio
+
+- **Rol:** Creador del concepto, arquitecto del sistema y desarrollador principal
+- **GitHub:** [SCP-00](https://github.com/SCP-00)
+- **LinkedIn:** [buendia001](https://www.linkedin.com/in/buendia001)
+- **Email:** [v.buendiah@icloud.com](mailto:v.buendiah@icloud.com)
+
+### Buffy (Codebuff AI) — Agente de Desarrollo Asistido
+
+- **Rol:** Implementación, optimización y documentación del código asistida por IA
+
+---
+
 *Tutorial generado para el proyecto académico de Computación Blanda — Mayo 2026*
