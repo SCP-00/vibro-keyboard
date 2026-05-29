@@ -167,26 +167,58 @@ smarttext/
 
 ---
 
-## 📊 Métricas del Modelo
+## 📊 Resultados de Pruebas
 
-| Métrica | Valor |
-|---------|-------|
-| **Precisión top-3** (estimada) | >80% en palabras comunes |
-| **Tiempo de respuesta** | ~18ms (carga + predicción) |
-| **Tamaño del corpus** | ~395KB |
-| **Tamaño del APK** | 58MB |
-| **Cobertura de idiomas** | 2 (ES/EN) |
+### 🧪 Suite de Tests (Python)
+
+| Escenario | Resultado |
+|-----------|-----------|
+| **Inglés — Precisión Top-1** | **57.1%** |
+| **Inglés — Precisión Top-3** | **71.4%** |
+| **Español — Precisión Top-1** | **93.3%** |
+| **Español — Precisión Top-3** | **93.3%** |
+| **Bigramas contextuales** | ✅ Funcional (`how → to, you, many`) |
+| **Corrección ortográfica (Levenshtein)** | ✅ Funcional (fallback top 2000 palabras) |
+| **Tiempo promedio (prefijo)** | ~0.06ms |
+| **Tiempo promedio (corrección)** | ~67ms |
+| **Stress test (100 consultas)** | ✅ Completo sin errores |
+
+### 📱 Pruebas en Emuladores
+
+| Emulador | Estado | Resultado |
+|----------|--------|-----------|
+| `mid_range` (API 36, 720×1280) | ✅ **2 emuladores** | App instalada, predicción funcional, sin crashes |
+| `small_phone` (API 36, 720×1280) | ✅ Conectado | App instalada y funcional |
+| `high_end` (ARM) | ❌ No compatible | CPU ARM no soportada por QEMU2 en este equipo |
+
+**Predicciones verificadas en emulador:**
+- `"th"` → `["the" (88.5), "there" (69.2), "that" (65.6)]` ✅
+- `"the"` → `["the" (88.5), "they" (81.2), "theo" (81.2)]` ✅
+- `"cas"` (ES) → `["casa", "caso", "casi"]` ✅
+- `"de "` (ES bigram) → Predicción contextual detectada ✅
+
+### 📈 6 Gráficas de Experimentación
+
+| Gráfica | Descripción |
+|---------|-------------|
+| `01_accuracy_by_prefix_length.png` | Precisión vs longitud del prefijo |
+| `02_fuzzy_vs_raw.png` | Comparativa fuzzy scoring vs raw |
+| `03_spelling_correction.png` | Rendimiento de corrección ortográfica |
+| `04_timing_distribution.png` | Distribución de tiempos de respuesta |
+| `05_fuzzy_behavior.png` | Comportamiento del sistema difuso |
+| `06_dashboard.png` | Dashboard consolidado de métricas |
 
 ---
 
 ## 🔮 Próximos Pasos
 
-- [ ] Experimentación con métricas de precisión
-- [ ] Optimización de tamaño de APK
-- [ ] Pruebas en emuladores de gama baja (2 cores, 1.5GB RAM)
-- [ ] Pruebas en emuladores de gama media (4 cores, 4GB RAM)
-- [ ] Visualización de datos experimentales
+- [x] ~~Experimentación con métricas de precisión~~ ✅
+- [x] ~~Pruebas en emuladores~~ ✅ (2 emuladores)
+- [x] ~~Visualización de datos experimentales~~ ✅ (6 gráficas)
+- [ ] Optimización de tamaño de APK (58MB → reducir vía ProGuard)
+- [ ] Pruebas en dispositivo físico
 - [ ] Informe técnico (formato IEEE/ACM)
+- [ ] SOM para clustering de palabras (técnica adicional de Computación Blanda)
 
 ---
 
