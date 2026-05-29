@@ -99,10 +99,13 @@ class Predictor:
 
     # ────────────────────────  Search helpers  ────────────────────────
 
-    def search_prefix(self, prefix):
+    def search_prefix(self, prefix, min_length=3):
         """Return [(word, combined_freq), …] sorted by freq desc.
 
         Combines corpus frequency with any user boost.
+        Filters out words shorter than min_length (default 3) to avoid
+        single/double-letter artifacts from subtitle/corpus data.
+        Two-letter words (el, la, de, en, etc.) are handled by bigrams.
         """
         if not self.sorted_words:
             return []
@@ -112,6 +115,11 @@ class Predictor:
         right = bisect.bisect_right(self.sorted_words,
                                     (prefix + '\uffff', 0))
         matches = self.sorted_words[left:right]
+        if not matches:
+            return []
+
+        # Filter out very short words (single-letter artifacts from corpus)
+        matches = [(w, f) for w, f in matches if len(w) >= min_length]
         if not matches:
             return []
 
