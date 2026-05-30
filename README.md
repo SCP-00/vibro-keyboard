@@ -4,6 +4,15 @@
 >
 > 100% Kotlin nativo · Sin Python · Bilingüe (Español/English) · 100% offline
 
+<div align="center">
+
+[![Download APK](https://img.shields.io/badge/📲%20Descargar%20APK-v1.0-brightgreen?style=for-the-badge&logo=android)](https://github.com/SCP-00/Android_text_predicto_board/releases/latest/download/app-release.apk)
+[![Build APK](https://github.com/SCP-00/Android_text_predicto_board/actions/workflows/build-apk.yml/badge.svg)](https://github.com/SCP-00/Android_text_predicto_board/actions/workflows/build-apk.yml)
+[![Tests](https://img.shields.io/badge/Tests-107%20✔️-blue?style=flat-square)]()
+[![License](https://img.shields.io/badge/License-Academic-lightgrey?style=flat-square)]()
+
+</div>
+
 ---
 
 ## ✨ Características
@@ -83,38 +92,79 @@
 
 ---
 
-## 📦 Instalación
+## 📦 Descarga e Instalación (1 Click)
 
-### Requisitos
-- Android Studio Ladybug Feature Drop (2024.2.2+) o superior
-- Android SDK 24-36
-- JDK 17
+### ⚡ Descarga directa
 
-### Compilar APK
+<div align="center">
+<a href="https://github.com/SCP-00/Android_text_predicto_board/releases/latest/download/app-release.apk">
+  <img src="https://img.shields.io/badge/📲%20Descargar%20APK%20(v1.0)-brightgreen?style=for-the-badge&logo=android" alt="Download APK" width="300">
+</a>
+
+<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://github.com/SCP-00/Android_text_predicto_board/releases/latest/download/app-release.apk" alt="QR para descargar desde tu celular" width="150">
+
+**Escanea el QR con tu celular para descargar e instalar directamente**
+</div>
+
+> ⚡ **Android te pedirá confirmación** para instalar apps de orígenes desconocidos. Actívalo y ¡listo!
+
+---
+
+### 📋 Instalación paso a paso
+
+#### En tu teléfono (recomendado):
+
+| Paso | Acción |
+|------|--------|
+| 1 | Abre este repositorio en Chrome desde tu Android |
+| 2 | Toca el botón **📲 Descargar APK** de arriba |
+| 3 | Cuando termine la descarga, ábrela desde las notificaciones |
+| 4 | Acepta "Instalar apps desconocidas" si es necesario |
+| 5 | Presiona **Instalar** |
+| 6 | Abre la app **SmartText Keyboard** desde el launcher |
+| 7 | Presiona **"Activar en Ajustes"** → activa el teclado |
+| 8 | Selecciona SmartText como método de entrada predeterminado |
+| 9 | 🎉 **¡Listo! Empieza a escribir con predicción inteligente** |
+
+#### Desde tu computadora (vía ADB):
 ```bash
-cd smarttext
-./gradlew --no-configuration-cache assembleRelease
-```
+# 1. Descarga el APK desde GitHub Releases
+# 2. Conecta tu Android por USB con depuración USB activada
+adb install app-release.apk
 
-### Instalar en Emulador/Dispositivo
-```bash
-adb install app/build/outputs/apk/release/app-release.apk
-```
-
-### Activar como teclado
-```bash
-# Habilitar SmartIME como método de entrada
+# 3. Habilita SmartIME como teclado del sistema
 adb shell ime enable com.example.smarttext/.ime.SmartIME
-
-# Establecer como teclado predeterminado
 adb shell ime set com.example.smarttext/.ime.SmartIME
 ```
 
-O desde la interfaz de usuario:
-1. Abre SmartText Keyboard desde el launcher
-2. Presiona "Activar en Ajustes"
-3. Activa "SmartText Keyboard" en Idioma e introducción de texto
-4. Selecciona SmartText como método de entrada predeterminado
+#### Compilar desde código fuente:
+```bash
+cd smarttext
+./gradlew --no-configuration-cache assembleRelease
+# APK generado en: app/build/outputs/apk/release/app-release.apk
+```
+
+---
+
+### 📥 Descargas disponibles
+
+| Archivo | Tamaño | Enlace |
+|---------|--------|--------|
+| **APK Release** (firmado) | ~7.8 MB | [Descargar](https://github.com/SCP-00/Android_text_predicto_board/releases/latest/download/app-release.apk) ⭐ |
+| **APK Debug** (sin firmar) | ~12 MB | [Ver Actions](https://github.com/SCP-00/Android_text_predicto_board/actions/workflows/build-apk.yml) |
+| **Código fuente** | — | [GitHub](https://github.com/SCP-00/Android_text_predicto_board) |
+
+---
+
+### 🔄 Actualizaciones automáticas
+
+Cada vez que se sube un cambio a `main`, GitHub Actions compila automáticamente un APK nuevo. 
+Para crear una **Release oficial**:
+```bash
+git tag v1.0.1
+git push --tags
+```
+Esto genera automáticamente un Release con el APK adjunto.
 
 ---
 
