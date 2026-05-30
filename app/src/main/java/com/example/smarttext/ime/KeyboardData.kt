@@ -102,17 +102,17 @@ object KeyboardData {
      * The base character itself is always included as the first option.
      */
     val SPECIAL_CHARS: Map<Char, String> = mapOf(
-        'a' to "aáàäâãå",
-        'e' to "eéèëê",
-        'i' to "iíìïî",
-        'o' to "oóòöôõ",
-        'u' to "uúùüû",
-        'n' to "nñ",
-        's' to "sß",
-        'c' to "cç",
+        'a' to "aáàäâãåæ",
+        'e' to "eéèëêēė",
+        'i' to "iíìïîīį",
+        'o' to "oóòöôõœø",
+        'u' to "uúùüûū",
+        'n' to "nñń",
+        's' to "sßśș",
+        'c' to "cçćč",
         'y' to "yýÿ",
-        'z' to "zž",
-        ',' to ",;:",
+        'z' to "zžźż",
+        ',' to ",':;",
         '.' to ".!?…"
     )
 
@@ -149,8 +149,9 @@ object KeyboardData {
         Key(c('ñ'), "ñ", 1, 9, longPressChars = null)
     )
 
-    /** English home row — 10 keys including apostrophe after L.
-     *  Standard EN QWERTY: a s d f g h j k l '
+    /** English home row — 9 keys (standard mobile QWERTY, no apostrophe).
+     *  Apostrophe is accessible via long-press on comma.
+     *  Standard mobile EN QWERTY: a s d f g h j k l
      */
     private val homeRowEnglish = listOf(
         Key(c('a'), "a", 1, 0, longPressChars = SPECIAL_CHARS['a']),
@@ -161,8 +162,7 @@ object KeyboardData {
         Key(c('h'), "h", 1, 5, longPressChars = null),
         Key(c('j'), "j", 1, 6, longPressChars = null),
         Key(c('k'), "k", 1, 7, longPressChars = null),
-        Key(c('l'), "l", 1, 8, longPressChars = null),
-        Key(c('\''), "'", 1, 9, longPressChars = "'\"`")
+        Key(c('l'), "l", 1, 8, longPressChars = null)
     )
 
     /** Bottom row: row 2 — same for all languages. */
@@ -187,18 +187,8 @@ object KeyboardData {
         Key(KeyCode.ENTER, "↵", 3, 4)
     )
 
-    // ── Layout dimensions ──
-
-    /** Columns per row in the 4-row layout. */
-    private val rowCols = mapOf(
-        0 to 10,   // top row
-        1 to 10,   // home row (Spanish); overridden to 9 for English
-        2 to 9,    // bottom row
-        3 to 5     // space row
-    )
-
     /** Space row column weights for proportional sizing. */
-    private val spaceRowWeights = floatArrayOf(1.0f, 0.8f, 4.0f, 0.8f, 1.2f)
+    private val spaceRowWeights = floatArrayOf(1.2f, 0.7f, 4.5f, 0.7f, 1.4f)
 
     // ── Public API ──
 
@@ -225,7 +215,7 @@ object KeyboardData {
      * Compute key bounds for a given view size.
      *
      * Layout uses proportional column widths with special handling for:
-     * - Row 2 (bottom): wider Shift and Backspace keys (1.3× normal)
+     * - Row 2 (bottom): wider Shift and Backspace keys (1.4× normal)
      * - Row 3 (space): weighted proportional widths
      *
      * @param keys Keys to lay out (must have row/col assigned)
@@ -294,7 +284,7 @@ object KeyboardData {
     ) {
         if (rowKeys.isEmpty()) return
         val standardCols = rowKeys.size - 2
-        val specialWidth = 1.3f
+        val specialWidth = 1.4f
         val totalEffective = standardCols + specialWidth * 2
         val colWidth = (viewWidth - gap * (rowKeys.size - 1)) / totalEffective
         var xStart = gap / 2
