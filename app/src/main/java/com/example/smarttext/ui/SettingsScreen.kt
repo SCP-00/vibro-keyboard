@@ -20,10 +20,16 @@ import androidx.compose.ui.unit.dp
  *
  * Muestra el estado del predictor, selector de idioma,
  * e instrucciones para activar el teclado en el sistema.
+ *
+ * @param onOpenExperimentation Callback para navegar a la pantalla de experimentación.
+ * @param onOpenWritingAnalysis Callback para navegar a la pantalla de análisis de escritura.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(
+    onOpenExperimentation: () -> Unit = {},
+    onOpenWritingAnalysis: () -> Unit = {}
+) {
     val context = LocalContext.current
     var currentLang by remember { mutableStateOf("es") }
     var testText by remember { mutableStateOf("") }
@@ -131,6 +137,48 @@ fun SettingsScreen() {
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Navigation to experiment screens
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                )
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "🔬 Experimentación y Análisis",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Visualiza el mapa auto-organizado (SOM), compara precisión de predicción, y explora estadísticas del corpus.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = onOpenExperimentation,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("🧪 Experimentación")
+                        }
+                        OutlinedButton(
+                            onClick = onOpenWritingAnalysis,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("📝 Análisis")
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // Enable keyboard card
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -178,10 +226,11 @@ fun SettingsScreen() {
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     FeatureItem("Teclado QWERTY con fila numérica")
-                    FeatureItem("Predicción inteligente con lógica difusa")
-                    FeatureItem("Corrección ortográfica automática")
+                    FeatureItem("Predicción inteligente con lógica difusa (Mamdani)")
+                    FeatureItem("Corrección ortográfica automática (Levenshtein)")
                     FeatureItem("Deslizamiento (swipe/glide typing)")
                     FeatureItem("Soporte Español e Inglés")
+                    FeatureItem("Mapa Auto-Organizado (SOM) para clustering")
                     FeatureItem("100% offline — sin conexión a internet")
                     FeatureItem("Motor Kotlin nativo — rápido y eficiente")
                 }
