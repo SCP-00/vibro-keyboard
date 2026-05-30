@@ -110,6 +110,16 @@ object KeyboardData {
         return all
     }
 
+    /** Create a RectF with field-by-field assignment (compatible with Android unit test stubs). */
+    private fun rectF(left: Float, top: Float, right: Float, bottom: Float): RectF {
+        val r = RectF()
+        r.left = left
+        r.top = top
+        r.right = right
+        r.bottom = bottom
+        return r
+    }
+
     /**
      * Compute key bounds for a given view size.
      * Each key's bounds are stored in the `bounds` property.
@@ -145,7 +155,7 @@ object KeyboardData {
 
                 for ((i, key) in rowKeys.withIndex()) {
                     val keyWidth = availableWidth * spaceRowWeights[i] / totalWeight
-                    key.bounds = RectF(xStart, rowTop, xStart + keyWidth, rowBottom)
+                    key.bounds = rectF(xStart, rowTop, xStart + keyWidth, rowBottom)
                     xStart += keyWidth + horizontalGap
                 }
             } else if (rowIdx == 3) {
@@ -158,7 +168,7 @@ object KeyboardData {
                 var xStart = horizontalGap / 2
                 for ((i, key) in rowKeys.withIndex()) {
                     val w = if (i == 0 || i == rowKeys.size - 1) colWidth * specialWidth else colWidth
-                    key.bounds = RectF(xStart, rowTop, xStart + w, rowBottom)
+                    key.bounds = rectF(xStart, rowTop, xStart + w, rowBottom)
                     xStart += w + horizontalGap
                 }
             } else {
@@ -168,7 +178,7 @@ object KeyboardData {
                 var xStart = horizontalGap / 2
 
                 for (key in rowKeys) {
-                    key.bounds = RectF(xStart, rowTop, xStart + colWidth, rowBottom)
+                    key.bounds = rectF(xStart, rowTop, xStart + colWidth, rowBottom)
                     xStart += colWidth + horizontalGap
                 }
             }

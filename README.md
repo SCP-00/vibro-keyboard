@@ -175,17 +175,17 @@ O desde la interfaz de usuario:
 
 | Componente | Archivos | Líneas | Tests Unitarios | Tests Instrumentados | Cobertura Automatizada |
 |------------|----------|--------|-----------------|---------------------|------------------------|
-| **PredictorEngine** | 1 | ~220 | 19 | 0 | **Alta** (inicialización, búsqueda, predicción 4 estrategias, frecuencias) |
+| **PredictorEngine** | 1 | ~220 | 34 | 0 | **Alta** (inicialización, búsqueda, predicción 4 estrategias, frecuencias, persistencia, corpus corrupto, concurrencia, idioma EN) |
 | **FuzzyScorer** | 1 | ~150 | 40 | 0 | **Alta** (Levenshtein, fuzzificación 3 vars, 7 reglas Mamdani, centroide) |
 | **GestureRecognizer** | 1 | ~265 | 14 | 0 | **Media** (swipe/tap, recolección, scoring, estado) |
-| **KeyboardData** | 1 | ~125 | 0 | 0 | **0%** (estructura de datos plana, sin lógica condicional) |
+| **KeyboardData** | 1 | ~135 | 19 | 0 | **Alta** (idiomas ES/EN, teclas especiales, layout bounds, filas/columnas) |
 | **SmartKeyboardView** | 1 | ~345 | 0 | 0 | **0%** (requiere instrumentación) |
 | **SmartIME** | 1 | ~175 | 0 | 0 | **0%** (requiere instrumentación) |
 | **UI (Compose)** | 3 | ~245 | 0 | 0 | **0%** (requiere instrumentación) |
 | **Navigation + Theme** | 5 | ~85 | 0 | 0 | **0%** (configuración declarativa) |
-| **Total App** | **14** | **~1,595** | **73** | **0** | **~45% unitaria + ~35% emulador** |
+| **Total App** | **14** | **~1,610** | **107** | **0** | **~50% unitaria + ~35% emulador** |
 
-> ✅ **3 archivos de test creados** en `app/src/test/java/com/example/smarttext/`: `engine/FuzzyScorerTest.kt` (40 tests), `engine/PredictorEngineTest.kt` (19 tests), `ime/GestureRecognizerTest.kt` (14 tests). **73 tests — 0 fallos.**
+> ✅ **4 archivos de test creados** en `app/src/test/java/com/example/smarttext/`: `engine/FuzzyScorerTest.kt` (40 tests), `engine/PredictorEngineTest.kt` (34 tests), `ime/GestureRecognizerTest.kt` (14 tests), `ime/KeyboardDataTest.kt` (19 tests). **107 tests — 0 fallos.**
 
 ### Funcionalidades Verificadas en Emulador (Cobertura ~35%)
 
@@ -224,17 +224,22 @@ Se verificaron **10 de 28 funcionalidades** mediante pruebas manuales en emulado
 | ✅ Reconocimiento con keys (3 casos) | `GestureRecognizerTest` | Pocos puntos, puntos suficientes sin patrón, keys sin letras |
 | ✅ Reset de estado (1 caso) | `GestureRecognizerTest` | Limpieza completa de puntos y secuencia |
 | ✅ Gesture completo mockeado (1 caso) | `GestureRecognizerTest` | Swipe sobre tecla 'c' y 'a' |
+| ✅ Persistencia de `user_data.json` (5 casos) | `PredictorEngineTest` | Guardado en disco, carga entre instancias, acumulación múltiple, JSON corrupto, JSON vacío |
+| ✅ Manejo de errores corpus (3 casos) | `PredictorEngineTest` | JSON malformado, idioma inexistente, sin unigrams/bigrams |
+| ✅ Concurrencia multi-thread (4 casos) | `PredictorEngineTest` | searchPrefix paralelo, updateFrequency paralelo, allWords paralelo, operaciones mixtas |
+| ✅ Cambio de idioma EN (3 casos) | `PredictorEngineTest` | Carga corpus inglés, predict con bigramas EN, searchPrefix EN |
+| ✅ Idioma ES ↔ EN etiquetas (2 casos) | `KeyboardDataTest` | SWITCH_LANG muestra 'EN' en teclado ES, 'ES' en teclado EN |
+| ✅ Letra ñ en home row (1 caso) | `KeyboardDataTest` | Ñ presente en fila 2 columna 9 en teclado ES |
+| ✅ Teclas especiales (6 casos) | `KeyboardDataTest` | SHIFT (⇧), BACKSPACE (⌫), ENTER (↵), SPACE (vacio), COMMA (,), PERIOD (.) |
+| ✅ Estructura del teclado (5 casos) | `KeyboardDataTest` | 5 filas, 44 teclas total, 10 numéricas fila 0, 10 alfabéticas fila 1, distribución por fila |
+| ✅ Layout bounds (6 casos) | `KeyboardDataTest` | Bounds dentro del área visible, no superposición horizontal/vertical, espacio más ancha, shift/backspace más anchas |
 
 ### Funcionalidades Aún NO Cubiertas
 
 | Funcionalidad | Riesgo | Cobertura Actual |
 |---------------|--------|------------------|
 | ❌ Renderizado visual del teclado en pantalla | Alto | Sin validación (requiere instrumentación/emulador) |
-| ❌ Persistencia de `user_data.json` | Medio | Sin validación (requiere File I/O mock complejo) |
-| ❌ Cambio de idioma (ES ↔ EN) | Medio | Sin validación directa |
-| ❌ Shift mode y shift lock | Bajo | Sin validación |
-| ❌ Manejo de errores (corpus corrupto) | Bajo | Sin validación |
-| ❌ Concurrencia (@Synchronized en multi-thread) | Medio | Sin validación |
+| ❌ Shift mode y shift lock | Bajo | Sin validación directa |
 | ❌ SmartKeyboardView.onTouchEvent() | Alto | Requiere instrumentación (simular MotionEvents) |
 | ❌ SmartIME.commitText() vía InputConnection | Alto | Requiere instrumentación (mock InputConnection) |
 
@@ -244,15 +249,16 @@ Se verificaron **10 de 28 funcionalidades** mediante pruebas manuales en emulado
 # Ejecutar todos los tests unitarios
 ./gradlew test
 
-# Resultado: 73 tests, 0 fallos
+# Resultado: 107 tests, 0 fallos
 ```
 
 | Archivo | Tests | Propósito |
 |---------|-------|-----------|
 | `engine/FuzzyScorerTest.kt` | **40** | Distancia Levenshtein, fuzzificación (frecuencia, Levenshtein, contexto), 7 reglas Mamdani, getScore integración |
-| `engine/PredictorEngineTest.kt` | **19** | Inicialización, searchPrefix (6), predict 4 estrategias (6), updateFrequency (4), allWords (2) — usa **MockK** para mockear Context + AssetManager |
-| `ime/GestureRecognizerTest.kt` | **14** | Detección swipe/tap (6), recolección de puntos (3), reconocimiento con keys (3), reset (1), gesture completo (1) — usa **MockK** para mockear PredictorEngine |
-| **Total** | **73** | **3 clases de test, 0 fallos** |
+| `engine/PredictorEngineTest.kt` | **34** | Inicialización, searchPrefix (6), predict (6), updateFrequency (4), allWords (2), persistencia (5), corpus corrupto (3), concurrencia (4), idioma EN (3) — usa **MockK** |
+| `ime/GestureRecognizerTest.kt` | **14** | Detección swipe/tap (6), recolección de puntos (3), reconocimiento con keys (3), reset (1), gesture completo (1) — usa **MockK** |
+| `ime/KeyboardDataTest.kt` | **19** | Idioma ES/EN (4), teclas especiales (6), conteo/filas (4), layout bounds (5) |
+| **Total** | **107** | **4 clases de test, 0 fallos** |
 
 ### Dependencias de Testing Añadidas
 
@@ -266,11 +272,11 @@ Se verificaron **10 de 28 funcionalidades** mediante pruebas manuales en emulado
 1. **Tests instrumentados** (requieren emulador API 24+):
    - `SmartIME` — verificar ciclo de vida completo con `InputConnection` mockeado
    - `SmartKeyboardView` — simular `MotionEvents` de tap, swipe, y verificar `invalidate()`
+   - Shift mode y shift lock mediante MotionEvents
 
 2. **Tests de integración**:
    - Flujo completo: Input → PredictorEngine.commitText() → feedback loop
-   - Persistencia: escribir y leer `user_data.json`
-   - Cambio de idioma: verificar recarga del corpus ES ↔ EN
+   - Verificación de persistencia multi-sesión con emulador
 
 3. **Tests de rendimiento**:
    - Tiempo de `predict()` con corpus completo (10K palabras)
