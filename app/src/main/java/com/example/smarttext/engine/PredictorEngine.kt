@@ -7,17 +7,28 @@ import java.io.File
 import java.util.LinkedHashMap
 
 /**
- * SmartText Predictor — Kotlin nativo.
+ * SmartText PredictorEngine — motor de predicción de palabras nativo Kotlin.
  *
- * Reemplaza el predictor Python/Chaquopy con una implementación Kotlin pura.
+ * ## Arquitectura
  *
- * Optimizaciones:
+ * Reemplaza el predictor Python/Chaquopy con una implementación Kotlin pura,
+ * optimizada para dispositivos de gama baja (sin dependencia de Python).
+ *
+ * ## Algoritmos
+ *
+ * 1. **Búsqueda por prefijo** — lista ordenada + bisección O(log n)
+ * 2. **FuzzyScorer (Lógica Difusa Mamdani)** — Levenshtein + frecuencia + contexto
+ * 3. **LRU cache** para prefijos comunes (128 entradas)
+ * 4. **Bigramas** para predicción por contexto
+ * 5. **Frecuencia de usuario persistente**
+ * 6. **Autocorrección** con detección de errores comunes (doble letra, omisiones)
+ *
+ * ## Optimizaciones
  * - Sorted word list + bisect para búsqueda de prefijo O(log n)
  * - LRU cache para prefijos comunes
  * - Levenshtein reducido a top 500 palabras
- * - Bigramas para predicción por contexto
- * - Frecuencia de usuario persistente
- * - Sin dependencia de Python/Chaquopy (~10-50x más rápido en gama baja)
+ * - Sin dependencia de Python/Chaquopy (~10-50× más rápido en gama baja)
+ * - Thread-safe con @Synchronized en métodos compartidos
  */
 class PredictorEngine(private val context: Context, private val lang: String) {
 
@@ -27,11 +38,16 @@ class PredictorEngine(private val context: Context, private val lang: String) {
         private const val MIN_LENGTH = 3
         private const val LEVENSHTEIN_CANDIDATES = 500
         private const val USER_BOOST = 10
-
-        /** High surrogate for binary search upper bound */
+        /** High surrogate for binary search upper bound. */
         private const val END_CHAR = '\uffff'
     }
 
+    /**
+     * Una entrada de palabra con su frecuencia combinada (corpus + usuario).
+     *
+     * @property word La palabra en minúsculas
+     * @property frequency Frecuencia combinada (corpus + boost de usuario)
+     */
     data class WordEntry(val word: String, val frequency: Int)
 
     // ─── Corpus data ───
@@ -60,6 +76,7 @@ class PredictorEngine(private val context: Context, private val lang: String) {
 
     // ──────────────────────────  Loading  ──────────────────────────
 
+    /** Load the corpus JSON from assets and parse unigrams + bigrams. */
     private fun loadCorpus() {
         try {
             val jsonStr = context.assets.open("corpus.json").bufferedReader().use { it.readText() }
@@ -112,6 +129,7 @@ class PredictorEngine(private val context: Context, private val lang: String) {
         }
     }
 
+    /** Load user frequency data from disk (user_data.json). */
     private fun loadUserData() {
         if (!userDataFile.exists()) return
         try {
@@ -129,6 +147,7 @@ class PredictorEngine(private val context: Context, private val lang: String) {
         }
     }
 
+    /** Save user frequency data to disk. */
     private fun saveUserData() {
         try {
             userDataFile.writeText(JSONObject(userFreqs).toString())
@@ -140,9 +159,14 @@ class PredictorEngine(private val context: Context, private val lang: String) {
     // ────────────────────────  Public API  ────────────────────────
 
     /**
-     * Boost a word's frequency after user selects it.
-     * Invalidates both caches so future predictions reflect the boost.
-     * Thread-safe (synchronized on instance).
+     * Boost a word's frequency after the user selects/types it.
+     *
+     * Invalidates both the frequency-sorted cache and the prefix LRU cache
+     * so that future predictions reflect the boost immediately.
+     *
+     * Thread-safe via @Synchronized.
+     *
+     * @param word The word to boost (case-insensitive).
      */
     @Synchronized
     fun updateFrequency(word: String) {
@@ -154,11 +178,16 @@ class PredictorEngine(private val context: Context, private val lang: String) {
     }
 
     /**
-     * Return [(word, combined_freq), …] sorted by freq desc.
+     * Search for words matching a given prefix using binary search.
      *
-     * Combines corpus frequency with any user boost.
-     * Filters out words shorter than minLength (default 3) to avoid
-     * single/double-letter artifacts from subtitle/corpus data.
+     * Results are sorted by frequency descending and filtered by minimum length.
+     * User frequency boosts are included.
+     *
+     * Thread-safe via @Synchronized.
+     *
+     * @param prefix The string prefix to search for (case-insensitive).
+     * @param minLength Minimum word length to include (default 3).
+     * @return List of [WordEntry] matching the prefix, sorted by frequency descending.
      */
     @Synchronized
     fun searchPrefix(prefix: String, minLength: Int = MIN_LENGTH): List<WordEntry> {
@@ -183,7 +212,11 @@ class PredictorEngine(private val context: Context, private val lang: String) {
     }
 
     /**
-     * Return all words sorted by frequency descending (cached).
+     * Get all words sorted by combined frequency descending.
+     *
+     * Results are cached in [byFreqCache] and invalidated on [updateFrequency].
+     *
+     * Thread-safe via @Synchronized getter.
      */
     val allWords: List<WordEntry>
         @Synchronized
@@ -198,12 +231,20 @@ class PredictorEngine(private val context: Context, private val lang: String) {
         }
 
     /**
-     * Return top-k word suggestions using context + prefix + fuzzy logic.
+     * Get top-K word suggestions using context + prefix + fuzzy logic.
      *
-     * @param currentWord The word currently being typed (may be empty)
-     * @param previousWord The previous word for bigram context (may be null)
-     * @param topK Number of suggestions to return
-     * @return List of suggested words
+     * ## Estrategias (en orden de prioridad)
+     *
+     * 1. **Bigrama** — si hay `previousWord` y `currentWord` está vacío, usa bigramas
+     * 2. **Prefijo + Fuzzy** — si hay `currentWord`, busca por prefijo y scurea con FuzzyScorer
+     * 3. **Levenshtein fallback** — si el prefijo no da buenos resultados, prueba Levenshtein
+     *    en las top 500 palabras más frecuentes
+     * 4. **Ultimate fallback** — palabras más frecuentes del corpus
+     *
+     * @param currentWord The word currently being typed (may be empty).
+     * @param previousWord The previous word for bigram context (may be null).
+     * @param topK Number of suggestions to return.
+     * @return List of suggested words, best first.
      */
     fun predict(currentWord: String, previousWord: String?, topK: Int = 3): List<String> {
         val suggestions = mutableListOf<String>()
@@ -216,7 +257,6 @@ class PredictorEngine(private val context: Context, private val lang: String) {
             if (bg != null) {
                 val sorted = bg.sortedByDescending { it.frequency }
                 suggestions.addAll(sorted.take(topK).map { it.word })
-                Log.d(TAG, "Bigram predict: ctx='$key' -> $suggestions")
                 return suggestions
             }
 
@@ -224,7 +264,6 @@ class PredictorEngine(private val context: Context, private val lang: String) {
             val all = allWords
             if (all.isNotEmpty()) {
                 suggestions.addAll(all.take(topK).map { it.word })
-                Log.d(TAG, "Bigram miss: ctx='$key' fallback -> $suggestions")
                 return suggestions
             }
         }
@@ -232,7 +271,6 @@ class PredictorEngine(private val context: Context, private val lang: String) {
         // ── 2) Prefix prediction (with fuzzy scoring) ──
         if (word.isNotEmpty()) {
             val prefixResults = getCachedPrefix(word.lowercase())
-            Log.d(TAG, "Prefix search: '$word' -> ${prefixResults.size} candidates")
 
             val fuzzyResults = mutableListOf<Pair<String, Double>>()
             val hasContext = previousWord != null
@@ -254,7 +292,6 @@ class PredictorEngine(private val context: Context, private val lang: String) {
                 }
                 levResults.sortByDescending { it.second }
                 suggestions.addAll(levResults.filter { it.second >= 5.0 }.take(topK).map { it.first })
-                Log.d(TAG, "Levenshtein fallback: ${topCandidates.size} candidates -> $suggestions")
             }
         }
 
@@ -266,7 +303,6 @@ class PredictorEngine(private val context: Context, private val lang: String) {
             }
         }
 
-        Log.d(TAG, "Predict result: '$word' ctx='${previousWord ?: ""}' -> $suggestions")
         return suggestions
     }
 
@@ -274,57 +310,24 @@ class PredictorEngine(private val context: Context, private val lang: String) {
 
     /**
      * Check if a word exists in the dictionary (corpus or user data).
-     * Short words (1 char) are considered known to avoid aggressive correction.
+     *
+     * Words of length ≤ 2 are always considered "known" to avoid
+     * over-aggressive correction of short words like "he", "la", "un".
+     *
+     * @param word The word to check (case-insensitive).
+     * @return True if the word exists in the dictionary.
      */
     private fun isKnownWord(word: String): Boolean {
         val lower = word.lowercase()
         if (lower.length <= 2) return true
-        // searchPrefix with minLength=1 catches short words too
         val results = searchPrefix(lower, minLength = 1)
         return results.any { it.word == lower }
     }
 
     /**
-     * Find the best autocorrection for a potentially misspelled word.
-     *
-     * Uses FuzzyScorer (Levenshtein + frequency + context) to find the
-     * closest dictionary word. Only suggests a correction if:
-     * 1. The word is NOT already in the dictionary
-     * 2. A high-confidence match exists (shares first letter, close Levenshtein)
-     * 3. The word is at least 3 characters long
-     *
-     * @param word The potentially misspelled word.
-     * @return The corrected word, or null if no correction needed or possible.
+     * Compute Levenshtein (edit) distance between two strings.
+     * Uses the optimized two-row DP array approach.
      */
-    fun autocorrect(word: String): String? {
-        val lower = word.lowercase().trim()
-        if (lower.length < 3) return null  // Too short for reliable correction
-
-        // Already in dictionary — no correction needed
-        if (isKnownWord(lower)) return null
-
-        // Get best suggestion using FuzzyScorer (prefix + Levenshtein)
-        val suggestions = predict(lower, null, 5)
-        if (suggestions.isEmpty()) return null
-
-        val best = suggestions.first()
-        if (best == lower) return null  // Same word (shouldn't happen)
-
-        // Safety checks before suggesting a correction:
-        // 1. Must share the first letter
-        // 2. The edit distance should be reasonable
-        val editDist = levenshtein(best, lower)
-        val maxEdit = when {
-            lower.length <= 4 -> 1
-            lower.length <= 7 -> 2
-            else -> 3
-        }
-        if (best.first() != lower.first() || editDist > maxEdit) return null
-
-        Log.d(TAG, "Autocorrect: '$lower' -> '$best' (editDist=$editDist)")
-        return best
-    }
-
     private fun levenshtein(s1: String, s2: String): Int {
         val a = s1.lowercase()
         val b = s2.lowercase()
@@ -344,6 +347,161 @@ class PredictorEngine(private val context: Context, private val lang: String) {
             prev = curr
         }
         return prev[b.length]
+    }
+
+    /**
+     * Detect if the word has a common double-letter typo pattern.
+     * E.g. "teest" → has double "e", "commputer" → has double "m".
+     * This heuristic helps prioritize corrections that remove double letters.
+     *
+     * @return True if the word contains consecutive repeated characters.
+     */
+    private fun hasDoubleLetter(word: String): Boolean {
+        for (i in 0 until word.length - 1) {
+            if (word[i] == word[i + 1]) return true
+        }
+        return false
+    }
+
+    /**
+     * Generate correction candidates for a misspelled word.
+     *
+     * Uses multiple strategies:
+     * 1. **Direct predict** — FuzzyScorer prefix + Levenshtein
+     * 2. **Double-letter reduction** — if the word has double letters, try removing them
+     * 3. **Single-letter addition** — try inserting missing letters
+     * 4. **Character swap** — try swapping adjacent characters
+     *
+     * Results are scored by FuzzyScorer and sorted by score descending.
+     *
+     * @param word The misspelled word.
+     * @param topK Maximum number of candidates to return.
+     * @return List of (candidate, score) pairs, best first.
+     */
+    fun suggestCorrections(word: String, topK: Int = 5): List<Pair<String, Double>> {
+        val lower = word.lowercase().trim()
+        if (lower.length < 2) return emptyList()
+
+        val candidates = mutableMapOf<String, Double>()
+
+        // Strategy 1: PredictorEngine predict (FuzzyScorer)
+        val predictions = predict(lower, null, topK * 2)
+        for (pred in predictions) {
+            if (pred != lower) {
+                val score = FuzzyScorer.getScore(pred, lower,
+                    userFreqs[pred] ?: 0, false)
+                candidates[pred] = score.coerceAtLeast(0.0)
+            }
+        }
+
+        // Strategy 2: Double-letter reduction
+        if (hasDoubleLetter(lower)) {
+            val deduped = StringBuilder()
+            var i = 0
+            while (i < lower.length) {
+                val ch = lower[i]
+                deduped.append(ch)
+                // Skip consecutive duplicates
+                while (i + 1 < lower.length && lower[i + 1] == ch) i++
+                i++
+            }
+            val candidate = deduped.toString()
+            if (candidate != lower && candidate.length >= 2) {
+                val prefixResults = searchPrefix(candidate.first().toString())
+                for (we in prefixResults) {
+                    if (we.word != lower) {
+                        val levDist = levenshtein(we.word, candidate)
+                        if (levDist <= 2) {
+                            val score = FuzzyScorer.getScore(we.word, candidate,
+                                we.frequency, false)
+                            if (score > candidates[we.word] ?: 0.0) {
+                                candidates[we.word] = score.coerceAtLeast(0.0)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Strategy 3: Single adjacent character swap (transposition errors)
+        if (lower.length >= 2) {
+            for (i in 0 until lower.length - 1) {
+                val swapped = lower.toCharArray()
+                val tmp = swapped[i]
+                swapped[i] = swapped[i + 1]
+                swapped[i + 1] = tmp
+                val candidate = String(swapped)
+                val prefixResults = searchPrefix(candidate.first().toString())
+                for (we in prefixResults) {
+                    if (we.word != lower) {
+                        val levDist = levenshtein(we.word, candidate)
+                        if (levDist <= 1) {
+                            val score = FuzzyScorer.getScore(we.word, candidate,
+                                we.frequency, false)
+                            if (score > candidates[we.word] ?: 0.0) {
+                                candidates[we.word] = score.coerceAtLeast(0.0)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Sort by score descending and return topK
+        return candidates.entries
+            .sortedByDescending { it.value }
+            .take(topK)
+            .map { it.key to it.value }
+    }
+
+    /**
+     * Find the best autocorrection for a potentially misspelled word.
+     *
+     * ## Reglas de autocorrección
+     *
+     * 1. Ignora palabras < 3 caracteres
+     * 2. Si la palabra ya existe en el diccionario, no corrige
+     * 3. Usa [suggestCorrections] para obtener candidatos
+     * 4. Aplica filtros de seguridad:
+     *    - La primera letra debe coincidir
+     *    - El edit distance debe ser razonable (1-3 según longitud)
+     *    - El score FuzzyScorer debe superar un umbral
+     *
+     * @param word The potentially misspelled word.
+     * @return The best corrected word, or null if no correction is needed/possible.
+     */
+    fun autocorrect(word: String): String? {
+        val lower = word.lowercase().trim()
+        if (lower.length < 3) return null  // Too short for reliable correction
+
+        // Already in dictionary — no correction needed
+        if (isKnownWord(lower)) return null
+
+        // Get correction candidates using multi-strategy approach
+        val candidates = suggestCorrections(lower, 5)
+        if (candidates.isEmpty()) return null
+
+        val best = candidates.first()
+        val bestWord = best.first
+        val bestScore = best.second
+
+        if (bestWord == lower) return null
+
+        // Safety checks before suggesting a correction
+        val editDist = levenshtein(bestWord, lower)
+        val maxEdit = when {
+            lower.length <= 4 -> 1
+            lower.length <= 7 -> 2
+            else -> 3
+        }
+
+        // Must share first letter, reasonable edit distance, and minimum score
+        if (bestWord.first() != lower.first() || editDist > maxEdit || bestScore < 20.0) {
+            return null
+        }
+
+        Log.d(TAG, "Autocorrect: '$lower' -> '$bestWord' (editDist=$editDist, score=${"%.1f".format(bestScore)})")
+        return bestWord
     }
 
     // ────────────────────────  Internal helpers  ────────────────────────

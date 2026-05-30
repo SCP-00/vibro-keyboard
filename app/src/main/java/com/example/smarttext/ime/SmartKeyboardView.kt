@@ -7,17 +7,28 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.PointF
 import android.graphics.RectF
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
 import android.view.MotionEvent
 import android.view.View
 import com.example.smarttext.engine.PredictorEngine
-import com.example.smarttext.engine.PredictorEngine.WordEntry
 
 /**
- * Custom keyboard view that draws the QWERTY keyboard with Canvas,
- * handles touch (tap, swipe), draws swipe trails, and shows a candidate strip.
+ * Custom keyboard view drawn entirely with Canvas, supporting:
  *
- * Uses PredictorEngine for both tap-based predictions and swipe gesture
- * recognition.
+ * - QWERTY layout with language-adaptive rows (no Ñ in English)
+ * - Tap typing with shift/caps lock
+ * - Glide/swipe gesture typing
+ * - **Long-press** on vowel keys for accented characters (á, é, í, ó, ú, ñ, etc.)
+ * - **Long-press** on Backspace for repeat-delete with acceleration
+ * - Candidate prediction strip at the top
+ * - Smooth swipe trail visualization
+ *
+ * ## Long-press behavior
+ * - Keys with `longPressChars != null` show a popup after 350ms of hold
+ * - User slides finger to select a variant, then lifts to commit
+ * - Backspace long-press starts deleting after 400ms, then repeats every 80ms (accelerating)
  */
 class SmartKeyboardView(
     context: Context,
@@ -31,17 +42,28 @@ class SmartKeyboardView(
         private const val KEY_CORNER_RADIUS_DP = 6f
         private const val SWIPE_TRAIL_WIDTH_DP = 4f
         private const val SWIPE_TRAIL_ALPHA = 120
-        /** Keyboard max height as fraction of screen height */
+        /** Keyboard max height as fraction of screen height. */
         private const val MAX_KEYBOARD_HEIGHT_RATIO = 0.40f
+
+        // ── Long-press constants ──
+        /** Milliseconds before long-press popup appears. */
+        private const val LONG_PRESS_TIMEOUT_MS = 350L
+        /** Delay before backspace starts repeating (ms). */
+        private const val BACKSPACE_INITIAL_DELAY_MS = 400L
+        /** Initial repeat interval for backspace (ms). */
+        private const val BACKSPACE_REPEAT_INTERVAL_MS = 80L
+        /** Minimum repeat interval (fastest rate, ms). */
+        private const val BACKSPACE_MIN_INTERVAL_MS = 30L
+        /** How much to accelerate each repeat cycle (multiplier < 1). */
+        private const val BACKSPACE_ACCELERATION = 0.85f
     }
 
     // ─── State ───
     private var currentLang: String = "es"
     private var shiftMode: Boolean = false
     private var shiftLocked: Boolean = false
-    private var symbolMode: Boolean = false
 
-    // Keys with computed bounds
+    /** Keyboard keys with computed bounds. */
     private var keys: List<Key> = KeyboardData.generate(currentLang)
 
     // Candidate strip
@@ -51,6 +73,57 @@ class SmartKeyboardView(
     // Gesture
     private val gestureRecognizer = GestureRecognizer()
     private var isGesturing: Boolean = false
+
+    // ─── Long-press state ───
+    /** Handler for scheduling long-press actions. */
+    private val handler = Handler(Looper.getMainLooper())
+    /** The key being long-pressed (or null). */
+    private var longPressKey: Key? = null
+    /** Currently selected index in the long-press popup. */
+    private var longPressSelectedIndex: Int = 0
+    /** True when the long-press popup is visible. */
+    private var isLongPressPopupVisible: Boolean = false
+    /** Characters shown in the current long-press popup. */
+    private var longPressChars: String = ""
+    /** Bounding rect of the long-press popup (for touch tracking). */
+    private var longPressPopupBounds: RectF = RectF()
+    /** Runnable that triggers long-press popup. */
+    private val longPressRunnable = Runnable {
+        val key = longPressKey ?: return@Runnable
+        val chars = key.longPressChars
+        if (chars != null && chars.length >= 2 &&
+            key.code !in longPressBlocklist) {
+            longPressChars = chars
+            isLongPressPopupVisible = true
+            longPressSelectedIndex = 0
+            invalidate()
+        }
+    }
+
+    /** Keys that never show a long-press popup (even if they have longPressChars). */
+    private val longPressBlocklist = setOf(
+        KeyCode.BACKSPACE, KeyCode.SHIFT, KeyCode.SPACE,
+        KeyCode.ENTER, KeyCode.SWITCH_LANG
+    )
+
+    // ─── Backspace repeat state ───
+    /** True when backspace is being held for repeat. */
+    private var isBackspaceRepeating: Boolean = false
+    /** Current repeat interval (decreases with acceleration). */
+    private var backspaceRepeatInterval: Long = BACKSPACE_REPEAT_INTERVAL_MS
+    /** Runnable that triggers each backspace delete during repeat. */
+    private val backspaceRepeatRunnable = object : Runnable {
+        override fun run() {
+            if (!isBackspaceRepeating) return
+            ime.deleteBackward()
+            // Accelerate: decrease interval but not below minimum
+            backspaceRepeatInterval = maxOf(
+                (backspaceRepeatInterval * BACKSPACE_ACCELERATION).toLong(),
+                BACKSPACE_MIN_INTERVAL_MS
+            )
+            handler.postDelayed(this, backspaceRepeatInterval)
+        }
+    }
 
     // ─── Colors ───
     private val KEY_BG_NORMAL = Color.argb(35, 255, 255, 255)
@@ -65,6 +138,9 @@ class SmartKeyboardView(
     private val TRAIL_COLOR = Color.argb(SWIPE_TRAIL_ALPHA, 100, 180, 255)
     private val TRAIL_DOT_COLOR = Color.argb(200, 100, 180, 255)
     private val BACKGROUND_COLOR = Color.argb(235, 26, 28, 32)
+    private val POPUP_BG = Color.argb(220, 50, 55, 65)
+    private val POPUP_SELECTED_BG = Color.argb(255, 100, 180, 255)
+    private val POPUP_TEXT = Color.WHITE
 
     // ─── Paints ───
     private val keyBgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -118,7 +194,21 @@ class SmartKeyboardView(
         strokeWidth = 1f
     }
 
-    // Metrics
+    // ─── Long-press popup paints ───
+    private val popupBgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = POPUP_BG
+        style = Paint.Style.FILL
+    }
+    private val popupSelectedBgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = POPUP_SELECTED_BG
+        style = Paint.Style.FILL
+    }
+    private val popupTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = POPUP_TEXT
+        textAlign = Paint.Align.CENTER
+    }
+
+    // Metrics (cached)
     private val density = resources.displayMetrics.density
     private val keyMargin = KEY_MARGIN_DP * density
     private val keyCornerRadius = KEY_CORNER_RADIUS_DP * density
@@ -132,11 +222,19 @@ class SmartKeyboardView(
 
     // ─── Public API ───
 
+    /**
+     * Set the prediction engine used for word suggestions.
+     * Called during IME initialization and language changes.
+     */
     fun setPredictor(p: PredictorEngine?) {
         predictor = p
         updatePredictions("")
     }
 
+    /**
+     * Switch the keyboard to a different language.
+     * Rebuilds the key layout to match the language (e.g. removes Ñ for English).
+     */
     fun setLanguage(lang: String) {
         currentLang = lang
         shiftMode = false
@@ -144,18 +242,22 @@ class SmartKeyboardView(
         updatePredictions("")
     }
 
+    /** Toggle shift mode on/off. */
     fun setShiftMode(shifted: Boolean) {
         shiftMode = shifted
         rebuildKeys()
     }
 
-    /** Rebuild key positions after state changes. */
+    /** Rebuild key positions after state changes (language, shift). */
     private fun rebuildKeys() {
         keys = KeyboardData.generate(currentLang, shiftMode)
         post { requestLayout() }
     }
 
-    /** Update the candidate suggestions based on current input context. */
+    /**
+     * Update the candidate suggestions based on current input context.
+     * Fetches predictions from [PredictorEngine] and triggers a redraw.
+     */
     fun updatePredictions(currentWord: String) {
         val p = predictor ?: run {
             candidateWords.clear()
@@ -174,7 +276,7 @@ class SmartKeyboardView(
         postInvalidate()
     }
 
-    /** Notify the keyboard that a word was selected (update frequency). */
+    /** Notify that a word was selected (for frequency tracking). */
     fun notifyWordSelected(word: String) {
         predictor?.updateFrequency(word)
     }
@@ -184,9 +286,8 @@ class SmartKeyboardView(
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val width = MeasureSpec.getSize(widthMeasureSpec)
         val height = MeasureSpec.getSize(heightMeasureSpec)
-        android.util.Log.d(TAG, "onMeasure: ${MeasureSpec.getMode(widthMeasureSpec)}x${MeasureSpec.getMode(heightMeasureSpec)} $width x $height")
 
-        // Limit keyboard height to a fraction of screen height so the user can see the text
+        // Limit keyboard height to prevent covering the text field
         val screenHeight = resources.displayMetrics.heightPixels
         val maxHeight = (screenHeight * MAX_KEYBOARD_HEIGHT_RATIO).toInt()
         val cappedHeight = minOf(height, maxHeight).coerceAtLeast((260 * density).toInt())
@@ -204,7 +305,6 @@ class SmartKeyboardView(
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        android.util.Log.d(TAG, "onSizeChanged: $w x $h (old: $oldw x $oldh)")
         val keyAreaHeight = h - candidateStripHeight
         keys = KeyboardData.layoutKeys(keys, w.toFloat(), keyAreaHeight, topPadding = candidateStripHeight)
         invalidate()
@@ -228,12 +328,19 @@ class SmartKeyboardView(
         for (key in keys) {
             drawKey(canvas, key)
         }
+
+        // 4. Long-press popup (on top of everything)
+        if (isLongPressPopupVisible) {
+            drawLongPressPopup(canvas)
+        }
     }
 
+    // ─── Drawing helpers ───
+
+    /** Draw the prediction candidate strip at the top of the keyboard. */
     private fun drawCandidateStrip(canvas: Canvas) {
         if (candidateWords.isEmpty()) return
 
-        // Strip background
         canvas.drawColor(Color.argb(10, 100, 180, 255))
         canvas.drawLine(0f, candidateStripHeight, width.toFloat(), candidateStripHeight, separatorPaint)
 
@@ -244,11 +351,11 @@ class SmartKeyboardView(
             val word = candidateWords[i]
             val cx = itemWidth * i + itemWidth / 2
             val cy = candidateStripHeight / 2
-
-            // Pill background — first candidate highlighted
-            val bg = if (i == 0) candidateBgFirstPaint else candidateBgPaint
             val pad = 6f * density
             val pillRadius = (candidateStripHeight / 2 - 3f).coerceAtMost(14f * density)
+
+            // Pill background
+            val bg = if (i == 0) candidateBgFirstPaint else candidateBgPaint
             canvas.drawRoundRect(
                 itemWidth * i + pad, 3f * density,
                 itemWidth * (i + 1) - pad, candidateStripHeight - 3f * density,
@@ -256,16 +363,15 @@ class SmartKeyboardView(
             )
 
             // Text
-            val textSize = if (i == 0) 34f else 30f
-            candidateTextPaint.textSize = textSize * density / resources.displayMetrics.density
+            candidateTextPaint.textSize = (if (i == 0) 34f else 30f) * density / resources.displayMetrics.density
             candidateTextPaint.color = CANDIDATE_TEXT
             canvas.drawText(word, cx, cy + 12f, candidateTextPaint)
         }
     }
 
+    /** Draw a single key with its background, label, and state-dependent styling. */
     private fun drawKey(canvas: Canvas, key: Key) {
-        // Pick background based on key type and pressed state
-        val isSpecial = key.code < 0 // Special key (shift, backspace, space, enter, etc.)
+        val isSpecial = key.code < 0
         val bg = when {
             key.isPressed -> keyBgPressedPaint
             isSpecial && key.code != KeyCode.SPACE -> keyBgSpecialPaint
@@ -273,7 +379,6 @@ class SmartKeyboardView(
         }
         canvas.drawRoundRect(key.bounds, keyCornerRadius, keyCornerRadius, bg)
 
-        // Font size scaling for compact layout
         val keyTextSize = 34f
 
         when (key.code) {
@@ -312,24 +417,19 @@ class SmartKeyboardView(
                 canvas.drawText(key.label, key.centerX, key.centerY + 12f, keyTextPaint)
             }
             else -> {
-                // Regular character key
                 keyTextPaint.textSize = keyTextSize
                 keyTextPaint.color = KEY_TEXT_PRIMARY
-                val displayLabel = if (shiftMode || shiftLocked) {
-                    key.label.uppercase()
-                } else {
-                    key.label
-                }
+                val displayLabel = if (shiftMode || shiftLocked) key.label.uppercase() else key.label
                 canvas.drawText(displayLabel, key.centerX, key.centerY + 11f, keyTextPaint)
             }
         }
     }
 
+    /** Draw the swipe trail line with dots at gesture points. */
     private fun drawSwipeTrail(canvas: Canvas) {
         val points = gestureRecognizer.getTouchPoints()
         if (points.size < 2) return
 
-        // Draw the trail line
         val path = Path()
         path.moveTo(points[0].x, points[0].y)
         for (i in 1 until points.size) {
@@ -337,10 +437,67 @@ class SmartKeyboardView(
         }
         canvas.drawPath(path, trailPaint)
 
-        // Draw dots at gesture points
         trailDotPaint.strokeWidth = 6f * density
         for (pt in points) {
             canvas.drawCircle(pt.x, pt.y, 4f * density, trailDotPaint)
+        }
+    }
+
+    /**
+     * Draw the long-press character popup above the currently held key.
+     *
+     * Layout: horizontal bar with each variant as a rounded pill.
+     * The selected variant is highlighted in blue.
+     */
+    private fun drawLongPressPopup(canvas: Canvas) {
+        if (longPressChars.isEmpty()) return
+        val key = longPressKey ?: return
+
+        val charCount = longPressChars.length
+        val itemWidth = 48f * density
+        val itemHeight = 50f * density
+        val popupWidth = charCount * itemWidth + 8f * density
+        val popupHeight = itemHeight + 12f * density
+
+        // Position popup centered above the key
+        val keyCenterX = key.centerX
+        val keyTop = key.bounds.top
+        var popupLeft = keyCenterX - popupWidth / 2
+        val popupTop = (keyTop - popupHeight - 4f * density).coerceAtLeast(4f)
+        var popupRight = popupLeft + popupWidth
+        var popupBottom = popupTop + popupHeight
+
+        // Keep within horizontal bounds
+        if (popupLeft < 2f) {
+            popupLeft = 2f
+            popupRight = popupLeft + popupWidth
+        }
+        if (popupRight > width - 2f) {
+            popupRight = width - 2f
+            popupLeft = popupRight - popupWidth
+        }
+
+        longPressPopupBounds = RectF(popupLeft, popupTop, popupRight, popupBottom)
+
+        // Popup background (rounded rect)
+        canvas.drawRoundRect(longPressPopupBounds, 12f * density, 12f * density, popupBgPaint)
+
+        // Draw each character as a selectable pill
+        for (i in 0 until charCount) {
+            val cx = popupLeft + 4f * density + i * itemWidth + itemWidth / 2
+            val cy = popupTop + popupHeight / 2
+            val pillLeft = popupLeft + 4f * density + i * itemWidth + 2f * density
+            val pillRight = pillLeft + itemWidth - 4f * density
+            val pillTop = popupTop + 6f * density
+            val pillBottom = popupTop + popupHeight - 6f * density
+            val pillRadius = 8f * density
+
+            if (i == longPressSelectedIndex) {
+                canvas.drawRoundRect(pillLeft, pillTop, pillRight, pillBottom, pillRadius, pillRadius, popupSelectedBgPaint)
+            }
+
+            popupTextPaint.textSize = 32f * density / resources.displayMetrics.density
+            canvas.drawText(longPressChars[i].toString(), cx, cy + 12f, popupTextPaint)
         }
     }
 
@@ -350,12 +507,19 @@ class SmartKeyboardView(
         val x = event.x
         val y = event.y
 
+        // If long-press popup is visible, intercept touch
+        if (isLongPressPopupVisible) {
+            return handleLongPressTouch(event)
+        }
+
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
                 touchStartX = x
                 touchStartY = y
                 hasSwiped = false
                 isGesturing = false
+                isLongPressPopupVisible = false
+
                 pressedKey = findKeyAt(x, y)
                 pressedKey?.isPressed = true
 
@@ -365,6 +529,25 @@ class SmartKeyboardView(
                     return true
                 }
 
+                pressedKey?.let { key ->
+                    // Check for long-press candidates
+                    val chars = key.longPressChars
+                    if (chars != null && chars.length >= 2 &&
+                        key.code !in longPressBlocklist) {
+                        longPressKey = key
+                        handler.postDelayed(longPressRunnable, LONG_PRESS_TIMEOUT_MS)
+                    }
+                    // Check for backspace long-press (repeat delete)
+                    if (key.code == KeyCode.BACKSPACE) {
+                        longPressKey = key
+                        handler.postDelayed({
+                            isBackspaceRepeating = true
+                            backspaceRepeatInterval = BACKSPACE_REPEAT_INTERVAL_MS
+                            handler.post(backspaceRepeatRunnable)
+                        }, BACKSPACE_INITIAL_DELAY_MS)
+                    }
+                }
+
                 // Start gesture tracking
                 gestureRecognizer.startGesture(x, y)
                 invalidate()
@@ -372,20 +555,34 @@ class SmartKeyboardView(
             }
 
             MotionEvent.ACTION_MOVE -> {
-                // Check if we should switch to gesture mode
-                val dx = x - touchStartX
-                val dy = y - touchStartY
-                if (!hasSwiped && (dx * dx + dy * dy) > 900f) {
-                    hasSwiped = true
-                    isGesturing = true
-                    pressedKey?.isPressed = false
-                    pressedKey = null
+                // Cancel long-press if finger moves too far
+                if (!isLongPressPopupVisible && !isBackspaceRepeating) {
+                    val dx = x - touchStartX
+                    val dy = y - touchStartY
+                    val distSq = dx * dx + dy * dy
+
+                    if (distSq > 400f) { // ~20px movement cancels long-press
+                        handler.removeCallbacks(longPressRunnable)
+                        handler.removeCallbacks(backspaceRepeatRunnable)
+                        isBackspaceRepeating = false
+                        longPressKey = null
+                    }
+
+                    // Check if we should switch to gesture mode
+                    if (!hasSwiped && distSq > 900f) {
+                        hasSwiped = true
+                        isGesturing = true
+                        pressedKey?.isPressed = false
+                        pressedKey = null
+                        handler.removeCallbacks(longPressRunnable)
+                        handler.removeCallbacks(backspaceRepeatRunnable)
+                        isBackspaceRepeating = false
+                    }
                 }
 
                 if (isGesturing) {
                     gestureRecognizer.addPoint(x, y)
-                } else {
-                    // Update pressed key highlight
+                } else if (!isLongPressPopupVisible && !isBackspaceRepeating) {
                     pressedKey?.isPressed = false
                     pressedKey = findKeyAt(x, y)
                     pressedKey?.isPressed = true
@@ -395,19 +592,37 @@ class SmartKeyboardView(
             }
 
             MotionEvent.ACTION_UP -> {
+                // Cancel all long-press handlers
+                handler.removeCallbacks(longPressRunnable)
+                handler.removeCallbacks(backspaceRepeatRunnable)
+                isBackspaceRepeating = false
+
                 pressedKey?.isPressed = false
 
-                if (isGesturing) {
+                if (isLongPressPopupVisible) {
+                    // Commit the selected long-press character
+                    if (longPressSelectedIndex < longPressChars.length) {
+                        val char = longPressChars[longPressSelectedIndex]
+                        val charStr = if (shiftMode || shiftLocked) char.uppercase() else char.toString()
+                        ime.commitText(charStr)
+                        // Reset shift after one character
+                        if (shiftMode && !shiftLocked) {
+                            shiftMode = false
+                            rebuildKeys()
+                        }
+                    }
+                    isLongPressPopupVisible = false
+                    longPressKey = null
+                } else if (isGesturing) {
                     // Finish gesture — commit the recognized word (if any)
                     gestureRecognizer.addPoint(x, y)
-                    val recognized = gestureRecognizer.recognize(keys, predictor ?: return true, 5)
-
-                    if (recognized.isNotEmpty()) {
-                        val best = recognized.first().word
-                        ime.commitWord(best)
+                    val p = predictor
+                    if (p != null) {
+                        val recognized = gestureRecognizer.recognize(keys, p, 5)
+                        if (recognized.isNotEmpty()) {
+                            ime.commitWord(recognized.first().word)
+                        }
                     }
-                    // IMPORTANT: Do NOT fall back to single character on failed gesture!
-                    // The user intended a swipe — writing only the last key would be confusing.
                     gestureRecognizer.reset()
                     updatePredictions("")
                 } else {
@@ -419,14 +634,20 @@ class SmartKeyboardView(
                 }
 
                 isGesturing = false
+                longPressKey = null
                 invalidate()
                 return true
             }
 
             MotionEvent.ACTION_CANCEL -> {
+                handler.removeCallbacks(longPressRunnable)
+                handler.removeCallbacks(backspaceRepeatRunnable)
+                isBackspaceRepeating = false
+                isLongPressPopupVisible = false
                 pressedKey?.isPressed = false
                 isGesturing = false
                 gestureRecognizer.reset()
+                longPressKey = null
                 invalidate()
                 return true
             }
@@ -434,6 +655,48 @@ class SmartKeyboardView(
         return super.onTouchEvent(event)
     }
 
+    /**
+     * Handle touch events while the long-press popup is visible.
+     * Tracks horizontal finger movement to select a variant,
+     * then commits on finger lift.
+     */
+    private fun handleLongPressTouch(event: MotionEvent): Boolean {
+        val x = event.x
+        val y = event.y
+
+        when (event.action) {
+            MotionEvent.ACTION_MOVE -> {
+                // Calculate which character the finger is over
+                if (longPressChars.isNotEmpty()) {
+                    val itemWidth = 48f * density
+                    val relativeX = x - (longPressPopupBounds.left + 4f * density)
+                    val index = (relativeX / itemWidth).toInt().coerceIn(0, longPressChars.length - 1)
+                    if (index != longPressSelectedIndex) {
+                        longPressSelectedIndex = index
+                        invalidate()
+                    }
+                }
+            }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                // Commit the selected character
+                if (longPressSelectedIndex < longPressChars.length) {
+                    val char = longPressChars[longPressSelectedIndex]
+                    val charStr = if (shiftMode || shiftLocked) char.uppercase() else char.toString()
+                    ime.commitText(charStr)
+                    if (shiftMode && !shiftLocked) {
+                        shiftMode = false
+                        rebuildKeys()
+                    }
+                }
+                isLongPressPopupVisible = false
+                longPressKey = null
+                invalidate()
+            }
+        }
+        return true
+    }
+
+    /** Find the key at a given touch coordinate. */
     private fun findKeyAt(x: Float, y: Float): Key? {
         for (key in keys) {
             if (x >= key.bounds.left && x <= key.bounds.right &&
@@ -444,6 +707,7 @@ class SmartKeyboardView(
         return null
     }
 
+    /** Handle a single key tap (press and release without significant movement). */
     private fun handleKeyPress(key: Key) {
         when (key.code) {
             KeyCode.SHIFT -> {
@@ -468,14 +732,8 @@ class SmartKeyboardView(
             KeyCode.COMMA -> ime.commitText(",")
             KeyCode.PERIOD -> ime.commitText(".")
             else -> {
-                // Regular character
-                val char = if (shiftMode || shiftLocked) {
-                    key.label.uppercase()
-                } else {
-                    key.label
-                }
+                val char = if (shiftMode || shiftLocked) key.label.uppercase() else key.label
                 ime.commitText(char)
-                // Reset shift after typing one character (not locked)
                 if (shiftMode && !shiftLocked) {
                     shiftMode = false
                     rebuildKeys()
@@ -485,6 +743,7 @@ class SmartKeyboardView(
         invalidate()
     }
 
+    /** Handle a tap on the candidate strip to commit a predicted word. */
     private fun handleCandidateTap(x: Float) {
         if (candidateWords.isEmpty()) return
         val count = candidateWords.size.coerceAtMost(5)

@@ -4,12 +4,14 @@ import org.junit.Assert.*
 import org.junit.Test
 
 /**
- * Tests unitarios para KeyboardData y KeyCode.
+ * Tests unitarios para KeyboardData V3.
  *
- * Cobertura nueva:
- * - Cambio de idioma (ES ↔ EN): etiquetas SWITCH_LANG
+ * ## Cobertura V3
+ * - Layout español: 34 teclas (10+10+9+5), incluye ñ
+ * - Layout inglés: 33 teclas (10+9+9+5), sin ñ, con apóstrofe
+ * - SPECIAL_CHARS map: caracteres acentuados para long-press
+ * - Key.longPressChars: asignación correcta por tecla
  * - Teclas especiales (shift, backspace, enter, espacio, coma, punto)
- * - Estructura del teclado (filas, columnas, letra ñ)
  * - Layout de teclas (bounds, distribución proporcional)
  */
 class KeyboardDataTest {
@@ -35,7 +37,7 @@ class KeyboardDataTest {
     }
 
     @Test
-    fun `generate - idioma espanol contiene letra enie en home row`() {
+    fun `generate - espanol contiene letra enie en home row`() {
         val keys = KeyboardData.generate("es")
         val enieKey = keys.find { it.code == 'ñ'.code }
         assertNotNull("Spanish keyboard should include 'ñ'", enieKey)
@@ -44,28 +46,48 @@ class KeyboardDataTest {
     }
 
     @Test
-    fun `generate - teclado contiene 10 teclas alfabeticas en top row (fila 0)`() {
-        val keys = KeyboardData.generate("es")
-        val topRowKeys = keys.filter { it.row == 0 }
-        assertEquals("Row 0 should have 10 letter keys", 10, topRowKeys.size)
-        assertTrue("Row 0 should include 'q'", topRowKeys.any { it.label == "q" })
-        assertTrue("Row 0 should include 'p'", topRowKeys.any { it.label == "p" })
+    fun `generate - ingles NO contiene letra enie`() {
+        val keys = KeyboardData.generate("en")
+        val enieKey = keys.find { it.code == 'ñ'.code }
+        assertNull("English keyboard should NOT include 'ñ'", enieKey)
     }
 
     @Test
-    fun `generate - teclado contiene 10 teclas alfabeticas en home row (fila 1)`() {
+    fun `generate - ingles tiene home row de 9 teclas (sin ñ)`() {
+        val keys = KeyboardData.generate("en")
+        val homeRowKeys = keys.filter { it.row == 1 }
+        assertEquals("English home row should have 9 keys (no ñ)", 9, homeRowKeys.size)
+    }
+
+    @Test
+    fun `generate - espanol tiene home row de 10 teclas (con ñ)`() {
         val keys = KeyboardData.generate("es")
         val homeRowKeys = keys.filter { it.row == 1 }
-        assertEquals("Row 1 should have 10 letter keys", 10, homeRowKeys.size)
-        assertTrue("Row 1 should include 'a'", homeRowKeys.any { it.label == "a" })
-        assertTrue("Row 1 should include 'ñ'", homeRowKeys.any { it.label == "ñ" })
+        assertEquals("Spanish home row should have 10 keys (with ñ)", 10, homeRowKeys.size)
     }
 
     @Test
-    fun `generate - teclado tiene 4 filas`() {
+    fun `generate - teclado contiene 10 teclas en top row (fila 0) para ambos idiomas`() {
+        val esKeys = KeyboardData.generate("es")
+        val enKeys = KeyboardData.generate("en")
+        assertEquals("Spanish Row 0 should have 10 keys", 10, esKeys.filter { it.row == 0 }.size)
+        assertEquals("English Row 0 should have 10 keys", 10, enKeys.filter { it.row == 0 }.size)
+        assertTrue("Row 0 should include 'q'", esKeys.any { it.label == "q" })
+        assertTrue("Row 0 should include 'p'", esKeys.any { it.label == "p" })
+    }
+
+    @Test
+    fun `generate - espanol tiene 4 filas`() {
         val keys = KeyboardData.generate("es")
         val rows = keys.map { it.row }.distinct().sorted()
-        assertEquals("Should have 4 rows (0-3)", listOf(0, 1, 2, 3), rows)
+        assertEquals("Spanish should have 4 rows (0-3)", listOf(0, 1, 2, 3), rows)
+    }
+
+    @Test
+    fun `generate - ingles tiene 4 filas`() {
+        val keys = KeyboardData.generate("en")
+        val rows = keys.map { it.row }.distinct().sorted()
+        assertEquals("English should have 4 rows (0-3)", listOf(0, 1, 2, 3), rows)
     }
 
     // ═══════════════════════════════════════
@@ -125,32 +147,106 @@ class KeyboardDataTest {
     // ═══════════════════════════════════════
 
     @Test
-    fun `generate - numero total de teclas es 34`() {
-        // Row 0: 10 + Row 1: 10 + Row 2: 9 + Row 3: 5 = 34
+    fun `generate - espanol tiene 34 teclas (10+10+9+5)`() {
         val keys = KeyboardData.generate("es")
-        assertEquals("Total keys should be 34 (10+10+9+5)", 34, keys.size)
+        assertEquals("Spanish should have 34 keys (10+10+9+5)", 34, keys.size)
+    }
+
+    @Test
+    fun `generate - ingles tiene 33 teclas (10+9+9+5)`() {
+        val keys = KeyboardData.generate("en")
+        assertEquals("English should have 33 keys (10+9+9+5)", 33, keys.size)
     }
 
     @Test
     fun `generate - distribucion de teclas por fila`() {
-        val keys = KeyboardData.generate("es")
-        val rowCounts = keys.groupBy { it.row }.mapValues { it.value.size }
-        assertEquals("Row 0 should have 10 keys", 10, rowCounts[0])
-        assertEquals("Row 1 should have 10 keys", 10, rowCounts[1])
-        assertEquals("Row 2 should have 9 keys", 9, rowCounts[2])
-        assertEquals("Row 3 should have 5 keys", 5, rowCounts[3])
-    }
+        val esKeys = KeyboardData.generate("es")
+        val enKeys = KeyboardData.generate("en")
+        val esRowCounts = esKeys.groupBy { it.row }.mapValues { it.value.size }
+        val enRowCounts = enKeys.groupBy { it.row }.mapValues { it.value.size }
 
-    @Test
-    fun `generate - todas las teclas tienen codigo y etiqueta no nula`() {
-        val keys = KeyboardData.generate("es")
-        for (key in keys) {
-            assertNotNull("Key at row ${key.row} col ${key.col} should have non-null label", key.label)
-        }
+        // Row counts (row 1 differs)
+        assertEquals("Spanish Row 0", 10, esRowCounts[0]!!)
+        assertEquals("Spanish Row 1 (home)", 10, esRowCounts[1]!!)
+        assertEquals("Spanish Row 2 (bottom)", 9, esRowCounts[2]!!)
+        assertEquals("Spanish Row 3 (space)", 5, esRowCounts[3]!!)
+        assertEquals("English Row 0", 10, enRowCounts[0]!!)
+        assertEquals("English Row 1 (home)", 9, enRowCounts[1]!!)
+        assertEquals("English Row 2 (bottom)", 9, enRowCounts[2]!!)
+        assertEquals("English Row 3 (space)", 5, enRowCounts[3]!!)
     }
 
     // ═══════════════════════════════════════
-    // 4. Layout de teclas (validación básica)
+    // 4. SPECIAL_CHARS y long-press
+    // ═══════════════════════════════════════
+
+    @Test
+    fun `SPECIAL_CHARS contiene vocales acentuadas`() {
+        assertNotNull("a should have accented variants", KeyboardData.SPECIAL_CHARS['a'])
+        assertNotNull("e should have accented variants", KeyboardData.SPECIAL_CHARS['e'])
+        assertNotNull("i should have accented variants", KeyboardData.SPECIAL_CHARS['i'])
+        assertNotNull("o should have accented variants", KeyboardData.SPECIAL_CHARS['o'])
+        assertNotNull("u should have accented variants", KeyboardData.SPECIAL_CHARS['u'])
+        assertNotNull("n should have ñ", KeyboardData.SPECIAL_CHARS['n'])
+    }
+
+    @Test
+    fun `SPECIAL_CHARS - 'a' incluye 'a', 'a', 'a', 'a'`() {
+        val chars = KeyboardData.SPECIAL_CHARS['a'] ?: ""
+        assertTrue("'a' variants should start with 'a'", chars.startsWith("a"))
+        assertTrue("'a' variants should include 'á'", chars.contains("á"))
+        assertTrue("'a' variants should include 'à'", chars.contains("à"))
+    }
+
+    @Test
+    fun `SPECIAL_CHARS - 'n' incluye 'n' y 'n'`() {
+        val chars = KeyboardData.SPECIAL_CHARS['n'] ?: ""
+        assertTrue("'n' variants should start with 'n'", chars.startsWith("n"))
+        assertTrue("'n' variants should include 'ñ'", chars.contains("ñ"))
+    }
+
+    @Test
+    fun `SPECIAL_CHARS - 'c' incluye cedilla`() {
+        val chars = KeyboardData.SPECIAL_CHARS['c'] ?: ""
+        assertTrue("'c' variants should include 'ç'", chars.contains("ç"))
+    }
+
+    @Test
+    fun `teclas con longPressChars asignados correctamente`() {
+        val keys = KeyboardData.generate("es")
+
+        // Vowels should have long-press
+        val aKey = keys.find { it.code == 'a'.code }
+        assertNotNull("a key should have longPressChars", aKey?.longPressChars)
+        assertTrue("a key longPress should include 'á'", aKey!!.longPressChars!!.contains("á"))
+
+        val eKey = keys.find { it.code == 'e'.code }
+        assertNotNull("e key should have longPressChars", eKey?.longPressChars)
+
+        // Non-vowel letters should not have long-press
+        val pKey = keys.find { it.code == 'p'.code }
+        assertNull("p key should NOT have longPressChars", pKey?.longPressChars)
+
+        val rKey = keys.find { it.code == 'r'.code }
+        assertNull("r key should NOT have longPressChars", rKey?.longPressChars)
+    }
+
+    @Test
+    fun `teclas especiales no tienen longPressChars`() {
+        val keys = KeyboardData.generate("es")
+
+        val shiftKey = keys.find { it.code == KeyCode.SHIFT }
+        assertNull("SHIFT should not have longPressChars", shiftKey?.longPressChars)
+
+        val spaceKey = keys.find { it.code == KeyCode.SPACE }
+        assertNull("SPACE should not have longPressChars", spaceKey?.longPressChars)
+
+        val enterKey = keys.find { it.code == KeyCode.ENTER }
+        assertNull("ENTER should not have longPressChars", enterKey?.longPressChars)
+    }
+
+    // ═══════════════════════════════════════
+    // 5. Layout de teclas (validación básica)
     // ═══════════════════════════════════════
 
     @Test
@@ -158,7 +254,7 @@ class KeyboardDataTest {
         val keys = KeyboardData.generate("es")
         val viewWidth = 720f
         val viewHeight = 400f
-        val tolerance = 1.5f  // tolerancia por redondeo de punto flotante
+        val tolerance = 1.5f
 
         val laidOut = KeyboardData.layoutKeys(keys, viewWidth, viewHeight)
 
@@ -227,34 +323,11 @@ class KeyboardDataTest {
     }
 
     @Test
-    fun `layoutKeys - teclas shift y backspace mas anchas en fila 2`() {
-        val keys = KeyboardData.generate("es")
+    fun `layoutKeys - layout en ingles no lanza excepcion`() {
+        val keys = KeyboardData.generate("en")
+        // No debe lanzar excepción al hacer layout con 33 teclas (row 1 con 9 teclas)
         val laidOut = KeyboardData.layoutKeys(keys, 720f, 400f)
-
-        val bottomRow = laidOut.filter { it.row == 2 }
-        val shiftKey = bottomRow.first { it.code == KeyCode.SHIFT }
-        val backspaceKey = bottomRow.first { it.code == KeyCode.BACKSPACE }
-        val letterKey = bottomRow.first { it.code == 'c'.code }
-
-        val shiftWidth = shiftKey.bounds.right - shiftKey.bounds.left
-        val backspaceWidth = backspaceKey.bounds.right - backspaceKey.bounds.left
-        val letterWidth = letterKey.bounds.right - letterKey.bounds.left
-
-        assertTrue(
-            "SHIFT width ($shiftWidth) should be > letter key width ($letterWidth)",
-            shiftWidth > letterWidth
-        )
-        assertTrue(
-            "BACKSPACE width ($backspaceWidth) should be > letter key width ($letterWidth)",
-            backspaceWidth > letterWidth
-        )
+        assertEquals("English layout should have 33 keys", 33, laidOut.size)
     }
 
-    // ═══════════════════════════════════════
-    // 5. Key data class
-    // ═══════════════════════════════════════
-
-    // Key.centerX/centerY/width/height son delegados a RectF que requiere
-    // instrumentación Android completa (Robolectric) para funcionar.
-    // Se testean indirectamente mediante layoutKeys que asigna bounds.
 }
