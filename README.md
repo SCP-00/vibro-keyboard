@@ -6,7 +6,7 @@
 
 <div align="center">
 
-[![Download APK](https://img.shields.io/badge/📲%20Descargar%20APK-v1.1-brightgreen?style=for-the-badge&logo=android)](https://github.com/SCP-00/Android_text_predicto_board/releases/latest/download/app-release.apk)
+[![Download APK](https://img.shields.io/badge/📲%20Descargar%20APK-v1.2-brightgreen?style=for-the-badge&logo=android)](https://github.com/SCP-00/Android_text_predicto_board/releases/latest/download/app-release.apk)
 [![Build APK](https://github.com/SCP-00/Android_text_predicto_board/actions/workflows/build-apk.yml/badge.svg)](https://github.com/SCP-00/Android_text_predicto_board/actions/workflows/build-apk.yml)
 [![Tests](https://img.shields.io/badge/Tests-107%20✔️-blue?style=flat-square)](https://github.com/SCP-00/Android_text_predicto_board/actions)
 [![License](https://img.shields.io/badge/License-Academic-lightgrey?style=flat-square)](LICENSE)
@@ -99,7 +99,7 @@
 
 <div align="center">
 <a href="https://github.com/SCP-00/Android_text_predicto_board/releases/latest/download/app-release.apk">
-  <img src="https://img.shields.io/badge/📲%20Descargar%20APK%20(v1.0)-brightgreen?style=for-the-badge&logo=android" alt="Download APK" width="300">
+  <img src="https://img.shields.io/badge/📲%20Descargar%20APK%20(v1.2)-brightgreen?style=for-the-badge&logo=android" alt="Download APK" width="300">
 </a>
 
 <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://github.com/SCP-00/Android_text_predicto_board/releases/latest/download/app-release.apk" alt="QR para descargar desde tu celular" width="150">
@@ -151,8 +151,8 @@ cd smarttext
 
 | Archivo | Tamaño | Enlace |
 |---------|--------|--------|
-| **APK Release** (firmado) | ~7.8 MB | [Descargar](https://github.com/SCP-00/Android_text_predicto_board/releases/latest/download/app-release.apk) ⭐ |
-| **APK Debug** (sin firmar) | ~12 MB | [Ver Actions](https://github.com/SCP-00/Android_text_predicto_board/actions/workflows/build-apk.yml) |
+| **APK Release** (firmado) | ~8 MB | [Descargar](https://github.com/SCP-00/Android_text_predicto_board/releases/latest/download/app-release.apk) ⭐ |
+| **APK Debug** (sin firmar) | ~13 MB | [Ver Actions](https://github.com/SCP-00/Android_text_predicto_board/actions/workflows/build-apk.yml) |
 | **Código fuente** | — | [GitHub](https://github.com/SCP-00/Android_text_predicto_board) |
 
 ---
@@ -176,10 +176,10 @@ Esto genera automáticamente un Release con el APK adjunto.
 | Métrica | Resultado |
 |---------|-----------|
 | **Palabras cargadas (español)** | **10,004** |
-| **Palabras cargadas (inglés)** | **~9,894** |
-| **Tiempo de inicialización** | **~1-2 segundos** |
-| **Bigramas (español)** | **295** |
-| **Bigramas (inglés)** | **759** |
+| **Palabras cargadas (inglés)** | **1,844** |
+| **Tiempo de inicialización** | **<10ms** |
+| **Bigramas (español)** | **44** |
+| **Bigramas (inglés)** | **151** |
 
 ### Registro como IME del Sistema
 

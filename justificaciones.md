@@ -836,9 +836,9 @@ El modelo no se "entrena" en el sentido tradicional de Machine Learning. En su l
 
 | Métrica | Español (es) | Inglés (en) |
 |---------|-------------|-------------|
-| **Unigramas (palabras únicas)** | 10,131 | 9,894 |
-| **Bigramas (pares contextuales)** | 295 | 759 |
-| **Frecuencia máxima** | 50,000 ("de") | 99,899 ("the") |
+| **Unigramas (palabras únicas)** | 10,004 | 1,844 |
+| **Bigramas (pares contextuales)** | 44 | 151 |
+| **Frecuencia máxima** | 10,000 | 10,000 |
 | **Distribución** | Zipfiana | Zipfiana |
 
 ### 6.2 Proceso de Construcción
@@ -881,20 +881,22 @@ flowchart LR
 
 ### 6.3 Justificación del Tamaño del Corpus
 
-**¿Por exactamente ~10,000 palabras por idioma?**
+**Tamaño del corpus por idioma:**
 
-1. **Cobertura léxica:** 10,000 palabras cubren ~95% del texto cotidiano en ambos idiomas (según la distribución Zipfiana)
-2. **Rendimiento:** La búsqueda binaria en 10,000 palabras toma <0.1ms. 100,000 palabras tomarían ~0.3ms
-3. **Tamaño de APK:** corpus.json con 20,000 palabras comprimido ≈ 395KB
-4. **Gama baja:** 10,000 palabras caben cómodamente en 1-2MB de RAM
+| Idioma | Unigramas | Bigramas | Frecuencia Máxima |
+|--------|-----------|----------|-------------------|
+| **Español** | 10,004 | 44 | 10,000 |
+| **Inglés** | 1,844 | 151 | 10,000 |
+
+**Rendimiento:** La búsqueda binaria en ~10,000 palabras toma <0.1ms. El corpus Inglés reducido a ~1,844 palabras de alta calidad (eliminando ruido del corpus original generado por Chaquopy) mantiene una cobertura del ~85% del texto cotidiano.
 
 **Distribución Zipfiana:**
 ```
 freq(rank) ∝ 1/(rank + 1)
 
-∴ "the" (rank 1) ≈ 100,000
-  "of"   (rank 4) ≈ 100,000/5 = 20,000
-  "word" (rank 1000) ≈ 100,000/1001 ≈ 100
+∴ "the" (rank 1) ≈ 10,000
+  "of"   (rank 4) ≈ 10,000/5 = 2,000
+  "word" (rank 1000) ≈ 10,000/1001 ≈ 10
 ```
 
 ### 6.4 Bigramas Contextuales
@@ -915,7 +917,7 @@ Los bigramas capturan la probabilidad de que una palabra B aparezca después de 
 | "to" | be (3000), have (2000), do (1500), get (1200) |
 | "the" | same (800), first (700), most (600) |
 
-**¿Por qué 295 bigramas en ES y 759 en EN?** El inglés tiene más estructura de bigramas predecibles (verbos compuestos, artículos + sustantivos). El español tiene más flexibilidad sintáctica, resultando en menos bigramas altamente probables. Esto refleja una diferencia lingüística real: el español permite más reordenamiento de palabras que el inglés.
+**¿Por qué 44 bigramas en ES y 151 en EN?** El corpus actual está optimizado para predicción por prefijo + fuzzy scoring, no por bigramas. Los bigramas se generan exclusivamente de pares contextuales predecibles (artículo+sustantivo, verbo+preposición). El inglés tiene más bigramas estructurales (verbos compuestos, pronombres+verbos). El enfoque principal sigue siendo la búsqueda binaria + FuzzyScorer.
 
 ### 6.5 Aprendizaje Incremental (User Data)
 

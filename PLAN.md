@@ -13,7 +13,7 @@
 |------|--------|-------------|
 | **Fase 0** | ✅ Completa | Definición de alcance y restricciones |
 | **Fase 1** | ✅ Completa | Arquitectura técnica diseñada |
-| **Fase 2** | ✅ Completa | Corpus bilingüe generado (EN: 9,894 unigramas + 759 bigramas, ES: 10,131 unigramas + 295 bigramas) |
+| **Fase 2** | ✅ Completa | Corpus bilingüe generado (EN: 1,844 unigramas + 151 bigramas, ES: 10,004 unigramas + 44 bigramas) |
 | **Fase 3** | ✅ Completa | Motor predictivo offline (Sorted List + binary search + bigramas contextuales) |
 | **Fase 4** | ✅ Completa | Sistema de Lógica Difusa + Distancia Levenshtein |
 | **Fase 5** | ✅ Completa | UI/UX con Jetpack Compose Material 3 + Canvas keyboard |
@@ -91,8 +91,8 @@ Teclado Android IME 100% offline que prediga, corrija texto y permita escritura 
 
 | Idioma | Unigramas | Bigramas |
 |--------|-----------|----------|
-| **Inglés** | 9,894 | 759 |
-| **Español** | 10,131 | 295 |
+| **Inglés** | 1,844 | 151 |
+| **Español** | 10,004 | 44 |
 
 ### Distribución Zipfiana
 Las frecuencias siguen una distribución Zipfiana donde `freq ∝ 1/(rank+1)`, asegurando que las palabras más comunes tengan mayor peso en las sugerencias.
