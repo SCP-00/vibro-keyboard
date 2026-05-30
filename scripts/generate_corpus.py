@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Generate an expanded English corpus for SmartText keyboard.
-- ~2,000 common English unigrams (no duplicates, proper freq distribution)
-- ~350 bigram heads for context-aware prediction
-- Keeps existing Spanish corpus intact
+Generate expanded bilingual corpus (EN + ES) for SmartText keyboard.
+- ~1,800 common English unigrams with Zipfian distribution
+- ~2,300 common Spanish unigrams with Zipfian distribution
+- Bigram heads for context-aware prediction in both languages
 """
 
 import json
@@ -2373,7 +2373,7 @@ EN_BIGRAMS = OrderedDict([
     ])),
 ])
 
-# ─── Load current corpus, replace EN, preserve ES ───
+# ─── Load current corpus, replace EN and ES ───
 script_dir = os.path.dirname(os.path.abspath(__file__))
 # Try common paths
 paths = [
@@ -2408,6 +2408,24 @@ corpus["en"] = {
     "unigrams": en_unigrams_dict,
     "bigrams": en_bigrams_dict
 }
+
+# ─── Load and replace ES section from curated data ───
+es_data_path = os.path.join(os.path.dirname(path), "corpus_es.json")
+if os.path.exists(es_data_path):
+    with open(es_data_path, "r", encoding="utf-8") as f:
+        es_data = json.load(f)
+    corpus["es"] = {
+        "unigrams": es_data["unigrams"],
+        "bigrams": es_data["bigrams"]
+    }
+    print(f"✓ ES section replaced from: {es_data_path}")
+    print(f"   ES unigrams: {len(es_data['unigrams'])}")
+    print(f"   ES bigram heads: {len(es_data['bigrams'])}")
+    # Clean up temp file after use
+    os.remove(es_data_path)
+    print(f"✓ Temp file removed: {es_data_path}")
+else:
+    print(f"⚠ ES data file not found at: {es_data_path}, keeping existing ES section")
 
 # Verify no duplicates
 dup_check = len(EN_UNIGRAMS)
@@ -2466,6 +2484,6 @@ print(f"\n✅ Corpus updated!")
 print(f"   EN unigrams: {en_uni}")
 print(f"   EN bigram heads: {en_bi}")
 print(f"   EN total bigram pairs: {total_followers}")
-print(f"   ES unigrams: {es_uni} (unchanged)")
-print(f"   ES bigrams: {es_bi} (unchanged)")
+print(f"   ES unigrams: {es_uni}")
+print(f"   ES bigram heads: {es_bi}")
 print(f"   File size: {size/1024:.0f} KB")

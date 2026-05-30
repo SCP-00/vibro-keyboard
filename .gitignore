@@ -52,3 +52,4 @@ google-services.json
 # Scripts de prueba temporal
 /scripts/*.py
 !scripts/generate_corpus.py
+scripts/es_data.json
