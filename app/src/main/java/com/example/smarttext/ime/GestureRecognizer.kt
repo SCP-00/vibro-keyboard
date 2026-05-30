@@ -23,11 +23,11 @@ class GestureRecognizer {
         /** Distance threshold to detect a swipe vs tap (in pixels). */
         private const val SWIPE_DISTANCE_THRESHOLD = 30f
         /** Max distance from touch point to key center to consider it "on" the key. */
-        private const val KEY_HIT_RADIUS = 1.5f
+        private const val KEY_HIT_RADIUS = 1.8f
         /** Interpolation step in pixels between touch samples. */
-        private const val INTERPOLATION_STEP = 12f
+        private const val INTERPOLATION_STEP = 8f
         /** Minimum points to consider a valid gesture. */
-        private const val MIN_GESTURE_POINTS = 5
+        private const val MIN_GESTURE_POINTS = 4
         /** Max length for gesture-matched words (avoid unreasonably long matches). */
         private const val MAX_GESTURE_WORD_LENGTH = 15
     }
@@ -83,12 +83,14 @@ class GestureRecognizer {
      * @param keys The keyboard keys with computed bounds.
      * @param predictor The PredictorEngine for word suggestions.
      * @param topK Number of candidates to return.
+     * @param previousWord Previous word for bigram context (may be null).
      * @return List of (word, score) pairs sorted by score descending.
      */
     fun recognize(
         keys: List<Key>,
         predictor: PredictorEngine,
-        topK: Int = 5
+        topK: Int = 5,
+        previousWord: String? = null
     ): List<GestureResult> {
         if (touchPoints.size < MIN_GESTURE_POINTS) return emptyList()
 
@@ -104,7 +106,7 @@ class GestureRecognizer {
         Log.d(TAG, "Swipe pattern: '$pattern' from ${touchPoints.size} raw pts -> ${interpolated.size} interpolated")
 
         // 3. Generate candidates from PredictorEngine
-        return generateCandidates(pattern, predictor, topK)
+        return generateCandidates(pattern, predictor, topK, previousWord)
     }
 
     /** Get the raw touch points (for drawing the trail). */
@@ -189,13 +191,14 @@ class GestureRecognizer {
     private fun generateCandidates(
         pattern: String,
         predictor: PredictorEngine,
-        topK: Int
+        topK: Int,
+        previousWord: String? = null
     ): List<GestureResult> {
         val results = mutableMapOf<String, Float>()
 
         // Use PredictorEngine's predict() with the full pattern as "currentWord"
         // This leverages FuzzyScorer (Levenshtein + freq + context) for matching
-        val predictions = predictor.predict(pattern, null, topK * 3)
+        val predictions = predictor.predict(pattern, previousWord, topK * 3)
         for ((i, word) in predictions.withIndex()) {
             if (word.length > MAX_GESTURE_WORD_LENGTH) continue
             // Predict already returns FuzzyScorer-ranked results; assign descending scores
@@ -204,12 +207,12 @@ class GestureRecognizer {
         }
 
         if (results.size < topK && pattern.length >= 2) {
-            // Strategy 2: try each character in pattern as a prefix
+            // Strategy 2: prefix search with LENIENT length (pattern is much longer than word)
             val first = pattern.first().toString()
             val second = if (pattern.length > 1) pattern.substring(0, 2) else first
             
-            // Try 2-char prefix first
-            val prefixResults = predictor.searchPrefix(second, minLength = pattern.length - 1)
+            // Try 2-char prefix first — minLength=2 because swipe pattern is long but word is short
+            val prefixResults = predictor.searchPrefix(second, minLength = 2)
             for (we in prefixResults.take(100)) {
                 if (we.word in results || we.word.length > MAX_GESTURE_WORD_LENGTH) continue
                 val matchScore = scoreWord(we.word, pattern, we.frequency)
@@ -249,19 +252,22 @@ class GestureRecognizer {
      * Returns score 0-100.
      */
     private fun scoreWord(word: String, pattern: String, frequency: Int): Float {
-        if (word.length < pattern.length - 1 || word.length > pattern.length + 2) {
+        // Lenient length: swipe pattern is much longer than the intended word
+        // because every intermediate key is included in the pattern
+        if (word.length < 2 || word.length > pattern.length + 3) {
             return 0f
         }
 
-        // Subsequence check: all chars in pattern appear in order in the word
-        var pi = 0
-        for (ch in word) {
-            if (pi < pattern.length && ch == pattern[pi]) pi++
+        // Subsequence check: does the swipe path (pattern) contain the word's letters in order?
+        // e.g. pattern "qwertyu" → word "que": q(0), u(6), e(2) all appear in order
+        var wi = 0
+        for (ch in pattern) {
+            if (wi < word.length && ch == word[wi]) wi++
         }
-        val subsequenceRatio = pi.toFloat() / pattern.length
+        val subsequenceRatio = wi.toFloat() / word.length
 
         // More permissive: accept partial matches with frequency boost
-        if (subsequenceRatio < 0.4f) return 0f
+        if (subsequenceRatio < 0.3f) return 0f
 
         // Levenshtein distance
         val lev = levenshtein(word, pattern)

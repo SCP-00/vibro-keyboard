@@ -137,7 +137,7 @@ class SmartIME : InputMethodService() {
 
         if (text.length == 1 && text[0].isLetter()) {
             currentInputWord += text
-            keyboardView?.updatePredictions(currentInputWord)
+            keyboardView?.updatePredictions(currentInputWord, previousWord)
         } else {
             // Non-letter character (space, punctuation) — finalize word
             if (currentInputWord.isNotEmpty()) {
@@ -153,7 +153,7 @@ class SmartIME : InputMethodService() {
             }
             currentInputWord = ""
             if (text == " " || text == "." || text == ",") {
-                keyboardView?.updatePredictions("")
+                keyboardView?.updatePredictions("", previousWord)
             }
         }
 
@@ -196,7 +196,7 @@ class SmartIME : InputMethodService() {
                         p.updateFrequency(correction)
                     }
 
-                    keyboardView?.updatePredictions("")
+                    keyboardView?.updatePredictions("", correction)
                     // Now commit the space after the correction
                     ic.commitText(" ", 1)
                     currentInputWord = ""
@@ -214,7 +214,7 @@ class SmartIME : InputMethodService() {
 
         currentInputWord = ""
         ic.commitText(" ", 1)
-        keyboardView?.updatePredictions("")
+        keyboardView?.updatePredictions("", previousWord)
     }
 
     /**
@@ -230,6 +230,7 @@ class SmartIME : InputMethodService() {
         }
 
         ic.commitText(word + " ", 1)
+        previousWord = word.lowercase()
         currentInputWord = ""
 
         // Update frequency on background
@@ -237,7 +238,7 @@ class SmartIME : InputMethodService() {
             predictor?.updateFrequency(word.lowercase())
         }
 
-        keyboardView?.updatePredictions("")
+        keyboardView?.updatePredictions("", previousWord)
         keyboardView?.notifyWordSelected(word)
     }
 
@@ -248,7 +249,7 @@ class SmartIME : InputMethodService() {
         val ic = currentInputConnection ?: return
         if (currentInputWord.isNotEmpty()) {
             currentInputWord = currentInputWord.dropLast(1)
-            keyboardView?.updatePredictions(currentInputWord)
+            keyboardView?.updatePredictions(currentInputWord, previousWord)
         }
         ic.deleteSurroundingText(1, 0)
     }
@@ -260,6 +261,7 @@ class SmartIME : InputMethodService() {
         val ic = currentInputConnection ?: return
         ic.commitText("\n", 1)
         currentInputWord = ""
+        previousWord = null
         keyboardView?.updatePredictions("")
     }
 

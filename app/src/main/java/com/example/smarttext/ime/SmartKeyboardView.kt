@@ -49,7 +49,7 @@ class SmartKeyboardView(
         /** Milliseconds before long-press popup appears. */
         private const val LONG_PRESS_TIMEOUT_MS = 350L
         /** Delay before backspace starts repeating (ms). */
-        private const val BACKSPACE_INITIAL_DELAY_MS = 400L
+        private const val BACKSPACE_INITIAL_DELAY_MS = 300L
         /** Initial repeat interval for backspace (ms). */
         private const val BACKSPACE_REPEAT_INTERVAL_MS = 80L
         /** Minimum repeat interval (fastest rate, ms). */
@@ -69,6 +69,8 @@ class SmartKeyboardView(
     // Candidate strip
     private val candidateWords = mutableListOf<String>()
     private var predictor: PredictorEngine? = null
+    /** Previous word for bigram context in predictions. */
+    private var previousWord: String? = null
 
     // Gesture
     private val gestureRecognizer = GestureRecognizer()
@@ -123,6 +125,12 @@ class SmartKeyboardView(
             )
             handler.postDelayed(this, backspaceRepeatInterval)
         }
+    }
+    /** Runnable that starts backspace repeating after the initial delay. */
+    private val backspaceStartRunnable = Runnable {
+        isBackspaceRepeating = true
+        backspaceRepeatInterval = BACKSPACE_REPEAT_INTERVAL_MS
+        handler.post(backspaceRepeatRunnable)
     }
 
     // ─── Colors ───
@@ -258,7 +266,15 @@ class SmartKeyboardView(
      * Update the candidate suggestions based on current input context.
      * Fetches predictions from [PredictorEngine] and triggers a redraw.
      */
-    fun updatePredictions(currentWord: String) {
+    /**
+     * Update the candidate suggestions based on current input context.
+     * Fetches predictions from [PredictorEngine] and triggers a redraw.
+     *
+     * @param currentWord The word currently being typed (may be empty).
+     * @param contextWord The previous word for bigram context (may be null).
+     */
+    fun updatePredictions(currentWord: String, contextWord: String? = null) {
+        this.previousWord = contextWord
         val p = predictor ?: run {
             candidateWords.clear()
             invalidate()
@@ -267,7 +283,15 @@ class SmartKeyboardView(
         candidateWords.clear()
         if (currentWord.isNotEmpty()) {
             try {
-                val suggestions = p.predict(currentWord, null, 5)
+                val suggestions = p.predict(currentWord, contextWord, 5)
+                candidateWords.addAll(suggestions)
+            } catch (e: Exception) {
+                android.util.Log.e(TAG, "Predict error", e)
+            }
+        } else if (contextWord != null) {
+            // No current word but context available — show next-word predictions
+            try {
+                val suggestions = p.predict("", contextWord, 3)
                 candidateWords.addAll(suggestions)
             } catch (e: Exception) {
                 android.util.Log.e(TAG, "Predict error", e)
@@ -540,11 +564,7 @@ class SmartKeyboardView(
                     // Check for backspace long-press (repeat delete)
                     if (key.code == KeyCode.BACKSPACE) {
                         longPressKey = key
-                        handler.postDelayed({
-                            isBackspaceRepeating = true
-                            backspaceRepeatInterval = BACKSPACE_REPEAT_INTERVAL_MS
-                            handler.post(backspaceRepeatRunnable)
-                        }, BACKSPACE_INITIAL_DELAY_MS)
+                        handler.postDelayed(backspaceStartRunnable, BACKSPACE_INITIAL_DELAY_MS)
                     }
                 }
 
@@ -555,29 +575,29 @@ class SmartKeyboardView(
             }
 
             MotionEvent.ACTION_MOVE -> {
-                // Cancel long-press if finger moves too far
-                if (!isLongPressPopupVisible && !isBackspaceRepeating) {
-                    val dx = x - touchStartX
-                    val dy = y - touchStartY
-                    val distSq = dx * dx + dy * dy
+                // Cancel long-press / backspace repeat if finger moves too far
+                val dx = x - touchStartX
+                val dy = y - touchStartY
+                val distSq = dx * dx + dy * dy
 
-                    if (distSq > 400f) { // ~20px movement cancels long-press
-                        handler.removeCallbacks(longPressRunnable)
-                        handler.removeCallbacks(backspaceRepeatRunnable)
-                        isBackspaceRepeating = false
-                        longPressKey = null
-                    }
+                if (distSq > 400f) { // ~20px movement cancels long-press
+                    handler.removeCallbacks(longPressRunnable)
+                    handler.removeCallbacks(backspaceStartRunnable)
+                    handler.removeCallbacks(backspaceRepeatRunnable)
+                    isBackspaceRepeating = false
+                    longPressKey = null
+                }
 
-                    // Check if we should switch to gesture mode
-                    if (!hasSwiped && distSq > 900f) {
-                        hasSwiped = true
-                        isGesturing = true
-                        pressedKey?.isPressed = false
-                        pressedKey = null
-                        handler.removeCallbacks(longPressRunnable)
-                        handler.removeCallbacks(backspaceRepeatRunnable)
-                        isBackspaceRepeating = false
-                    }
+                // Prevent switching to gesture mode if backspace is repeating
+                if (!hasSwiped && !isBackspaceRepeating && distSq > 900f) {
+                    hasSwiped = true
+                    isGesturing = true
+                    pressedKey?.isPressed = false
+                    pressedKey = null
+                    handler.removeCallbacks(longPressRunnable)
+                    handler.removeCallbacks(backspaceStartRunnable)
+                    handler.removeCallbacks(backspaceRepeatRunnable)
+                    isBackspaceRepeating = false
                 }
 
                 if (isGesturing) {
@@ -592,8 +612,9 @@ class SmartKeyboardView(
             }
 
             MotionEvent.ACTION_UP -> {
-                // Cancel all long-press handlers
+                // Cancel all long-press/backspace handlers
                 handler.removeCallbacks(longPressRunnable)
+                handler.removeCallbacks(backspaceStartRunnable)
                 handler.removeCallbacks(backspaceRepeatRunnable)
                 isBackspaceRepeating = false
 
@@ -618,7 +639,7 @@ class SmartKeyboardView(
                     gestureRecognizer.addPoint(x, y)
                     val p = predictor
                     if (p != null) {
-                        val recognized = gestureRecognizer.recognize(keys, p, 5)
+                        val recognized = gestureRecognizer.recognize(keys, p, 5, previousWord)
                         if (recognized.isNotEmpty()) {
                             ime.commitWord(recognized.first().word)
                         }
