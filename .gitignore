@@ -48,3 +48,7 @@ google-services.json
 # Allow release APK files
 !releases/*.apk
 !releases/*.aab
+
+# Scripts de prueba temporal
+/scripts/*.py
+!scripts/generate_corpus.py

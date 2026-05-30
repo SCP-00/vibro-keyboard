@@ -6,9 +6,10 @@
 
 <div align="center">
 
-[![Download APK](https://img.shields.io/badge/📲%20Descargar%20APK-v1.0-brightgreen?style=for-the-badge&logo=android)](https://github.com/SCP-00/Android_text_predicto_board/releases/latest/download/app-release.apk)
+[![Download APK](https://img.shields.io/badge/📲%20Descargar%20APK-v1.1-brightgreen?style=for-the-badge&logo=android)](https://github.com/SCP-00/Android_text_predicto_board/releases/latest/download/app-release.apk)
 [![Build APK](https://github.com/SCP-00/Android_text_predicto_board/actions/workflows/build-apk.yml/badge.svg)](https://github.com/SCP-00/Android_text_predicto_board/actions/workflows/build-apk.yml)
 [![Tests](https://img.shields.io/badge/Tests-107%20✔️-blue?style=flat-square)](https://github.com/SCP-00/Android_text_predicto_board/actions)
+[![Glide Typing](https://img.shields.io/badge/Glide%20Typing-Verificado%20%F0%9F%94%80-green?style=flat-square)](docs/GLIDE_TYPING_TEST.md)
 [![License](https://img.shields.io/badge/License-Academic-lightgrey?style=flat-square)](LICENSE)
 
 </div>
@@ -88,6 +89,7 @@
 | **Build** | Gradle + AGP | 9.0.1 |
 | **SDK Mínimo** | Android API | 24 (Android 7.0) |
 | **SDK Objetivo** | Android API | 36 (Android 16) |
+| **Prueba Glide Typing** | Verificado en emulador | API 36 (Android 16) |
 | **Tamaño APK** | **~8 MB** (release) / **~12 MB** (debug) | — |
 
 ---
@@ -404,12 +406,15 @@ smarttext/
 - [x] ~~App de texto predictivo~~ → **IME Keyboard completo** ✅
 - [x] ~~Teclado básico~~ → **QWERTY + swipe/glide typing** ✅
 - [x] ~~Pruebas en emulador~~ → **IME registrado y funcional** ✅
-- [ ] Corrección del problema de `onCreateInputView()` no llamado
+- [x] ~~Long-press caracteres acentuados~~ → **áéíóúñ implementado** ✅
+- [x] ~~Autocorrección automática~~ → **Multi-estrategia implementada** ✅
+- [x] ~~Glide typing verificado~~ → **Reconocimiento de patrones funcional** ✅
 - [ ] Pruebas en dispositivo físico Android
 - [ ] Optimización de tamaño de APK con ProGuard
 - [ ] Modo numérico/símbolos en el teclado
 - [ ] Temas personalizables (colores, fondo)
-- [ ] Informe técnico (formato IEEE/ACM)
+- [ ] Informe técnico formato IEEE/ACM
+- [ ] Widget de emoticonos
 
 ---
 
