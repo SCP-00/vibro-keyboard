@@ -53,60 +53,51 @@ object KeyboardData {
 
     private const val TAG = "SmartIME"
 
-    /** Number of keyboard rows. */
-    const val ROWS = 5
+    /** Number of keyboard rows (4: QWERTY rows + space row). */
+    const val ROWS = 4
 
     /** Convert a Char to its Unicode Int code for Key.code. */
     private fun c(ch: Char): Int = ch.code
 
-    /** Key row definitions. */
-    private val numberRow = listOf(
-        Key(c('1'), "1", 0, 0), Key(c('2'), "2", 0, 1), Key(c('3'), "3", 0, 2),
-        Key(c('4'), "4", 0, 3), Key(c('5'), "5", 0, 4), Key(c('6'), "6", 0, 5),
-        Key(c('7'), "7", 0, 6), Key(c('8'), "8", 0, 7), Key(c('9'), "9", 0, 8),
-        Key(c('0'), "0", 0, 9)
-    )
+    // ── 4-row compact layout (no number row — saves ~20% height) ──
 
     private val topRow = listOf(
-        Key(c('q'), "q", 1, 0), Key(c('w'), "w", 1, 1), Key(c('e'), "e", 1, 2),
-        Key(c('r'), "r", 1, 3), Key(c('t'), "t", 1, 4), Key(c('y'), "y", 1, 5),
-        Key(c('u'), "u", 1, 6), Key(c('i'), "i", 1, 7), Key(c('o'), "o", 1, 8),
-        Key(c('p'), "p", 1, 9)
+        Key(c('q'), "q", 0, 0), Key(c('w'), "w", 0, 1), Key(c('e'), "e", 0, 2),
+        Key(c('r'), "r", 0, 3), Key(c('t'), "t", 0, 4), Key(c('y'), "y", 0, 5),
+        Key(c('u'), "u", 0, 6), Key(c('i'), "i", 0, 7), Key(c('o'), "o", 0, 8),
+        Key(c('p'), "p", 0, 9)
     )
 
     private val homeRow = listOf(
-        Key(c('a'), "a", 2, 0), Key(c('s'), "s", 2, 1), Key(c('d'), "d", 2, 2),
-        Key(c('f'), "f", 2, 3), Key(c('g'), "g", 2, 4), Key(c('h'), "h", 2, 5),
-        Key(c('j'), "j", 2, 6), Key(c('k'), "k", 2, 7), Key(c('l'), "l", 2, 8),
-        Key(c('ñ'), "ñ", 2, 9)
+        Key(c('a'), "a", 1, 0), Key(c('s'), "s", 1, 1), Key(c('d'), "d", 1, 2),
+        Key(c('f'), "f", 1, 3), Key(c('g'), "g", 1, 4), Key(c('h'), "h", 1, 5),
+        Key(c('j'), "j", 1, 6), Key(c('k'), "k", 1, 7), Key(c('l'), "l", 1, 8),
+        Key(c('ñ'), "ñ", 1, 9)
     )
 
     private val bottomRow = listOf(
-        Key(KeyCode.SHIFT, "⇧", 3, 0),
-        Key(c('z'), "z", 3, 1), Key(c('x'), "x", 3, 2), Key(c('c'), "c", 3, 3),
-        Key(c('v'), "v", 3, 4), Key(c('b'), "b", 3, 5), Key(c('n'), "n", 3, 6),
-        Key(c('m'), "m", 3, 7),
-        Key(KeyCode.BACKSPACE, "⌫", 3, 8)
+        Key(KeyCode.SHIFT, "⇧", 2, 0),
+        Key(c('z'), "z", 2, 1), Key(c('x'), "x", 2, 2), Key(c('c'), "c", 2, 3),
+        Key(c('v'), "v", 2, 4), Key(c('b'), "b", 2, 5), Key(c('n'), "n", 2, 6),
+        Key(c('m'), "m", 2, 7),
+        Key(KeyCode.BACKSPACE, "⌫", 2, 8)
     )
 
     private fun spaceRow(lang: String): List<Key> = listOf(
-        Key(KeyCode.SWITCH_LANG, if (lang == "es") "EN" else "ES", 4, 0),
-        Key(KeyCode.COMMA, ",", 4, 1),
-        Key(KeyCode.SPACE, "", 4, 2),
-        Key(KeyCode.PERIOD, ".", 4, 3),
-        Key(KeyCode.ENTER, "↵", 4, 4)
+        Key(KeyCode.SWITCH_LANG, if (lang == "es") "EN" else "ES", 3, 0),
+        Key(KeyCode.COMMA, ",", 3, 1),
+        Key(KeyCode.SPACE, "", 3, 2),
+        Key(KeyCode.PERIOD, ".", 3, 3),
+        Key(KeyCode.ENTER, "↵", 3, 4)
     )
 
     /** Generate full keyboard for a given language. */
     fun generate(lang: String, shiftMode: Boolean = false): List<Key> {
         val all = mutableListOf<Key>()
-        all.addAll(numberRow)
         all.addAll(topRow)
         all.addAll(homeRow)
         all.addAll(bottomRow)
         all.addAll(spaceRow(lang))
-
-        // Apply shift display for letters (actual character depends on shift state)
         return all
     }
 
@@ -123,6 +114,12 @@ object KeyboardData {
     /**
      * Compute key bounds for a given view size.
      * Each key's bounds are stored in the `bounds` property.
+     *
+     * Layout (4 rows):
+     *   0: q w e r t y u i o p
+     *   1: a s d f g h j k l ñ
+     *   2: ⇧ z x c v b n m ⌫
+     *   3: 🌐 , _____space_____ . ↵
      */
     fun layoutKeys(
         keys: List<Key>,
@@ -135,10 +132,10 @@ object KeyboardData {
         val verticalGap = 2f
         val horizontalGap = 2f
 
-        // Row widths (space row has different column counts)
-        val rowCols = intArrayOf(10, 10, 10, 9, 5)
-        // Space row column weights (comma, space gets 3x, period, enter)
-        val spaceRowWeights = floatArrayOf(1.2f, 0.8f, 3.5f, 0.8f, 1.2f)
+        // Row column counts for 4 rows
+        val rowCols = intArrayOf(10, 10, 9, 5)
+        // Space row column weights
+        val spaceRowWeights = floatArrayOf(1.0f, 0.8f, 4.0f, 0.8f, 1.2f)
 
         // Group keys by row
         val rows = keys.groupBy { it.row }
@@ -147,7 +144,7 @@ object KeyboardData {
             val rowTop = topPadding + rowIdx * rowHeight + verticalGap / 2
             val rowBottom = rowTop + rowHeight - verticalGap
 
-            if (rowIdx == 4) {
+            if (rowIdx == 3) {
                 // Space row uses weighted widths
                 val totalWeight = spaceRowWeights.sum()
                 val availableWidth = viewWidth - horizontalGap * (spaceRowWeights.size)
@@ -158,7 +155,7 @@ object KeyboardData {
                     key.bounds = rectF(xStart, rowTop, xStart + keyWidth, rowBottom)
                     xStart += keyWidth + horizontalGap
                 }
-            } else if (rowIdx == 3) {
+            } else if (rowIdx == 2) {
                 // Bottom row with shift and backspace wider
                 val standardCols = 7 // zxcvbnm = 7 cols
                 val specialWidth = 1.3f

@@ -168,6 +168,9 @@ class GestureRecognizerTest {
         recognizer.endGesture(250f, 250f)
 
         // Mock Predictor para devolver palabras
+        every { mockPredictor.predict(any(), any(), any()) } returns listOf(
+            "casa", "caso"
+        )
         every { mockPredictor.searchPrefix(any(), any()) } returns listOf(
             WordEntry("casa", 5000),
             WordEntry("caso", 4000)
@@ -188,6 +191,7 @@ class GestureRecognizerTest {
         recognizer.addPoint(210f, 120f)  // Cerca de espacio (ignorado)
         recognizer.endGesture(240f, 70f)  // Cerca de tecla 'q'
 
+        every { mockPredictor.predict(any(), any(), any()) } returns emptyList()
         every { mockPredictor.searchPrefix(any(), any()) } returns emptyList()
 
         val results = recognizer.recognize(mockKeys, mockPredictor, 5)
@@ -229,6 +233,9 @@ class GestureRecognizerTest {
     @Test
     fun `gesture completo - no lanza excepcion con mock Predictor`() {
         // Configurar mock Predictor para cualquier llamada
+        every { mockPredictor.predict(any(), any(), any()) } returns listOf(
+            "casa", "caso"
+        )
         every { mockPredictor.searchPrefix(any(), any()) } returns listOf(
             WordEntry("casa", 5000),
             WordEntry("caso", 4000)

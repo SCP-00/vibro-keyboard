@@ -39,34 +39,33 @@ class KeyboardDataTest {
         val keys = KeyboardData.generate("es")
         val enieKey = keys.find { it.code == 'ñ'.code }
         assertNotNull("Spanish keyboard should include 'ñ'", enieKey)
-        assertEquals("ñ should be in home row (row 2)", 2, enieKey!!.row)
+        assertEquals("ñ should be in home row (row 1)", 1, enieKey!!.row)
         assertEquals("ñ should be at column 9 (last in home row)", 9, enieKey.col)
     }
 
     @Test
-    fun `generate - teclado contiene 10 teclas numericas en fila 0`() {
+    fun `generate - teclado contiene 10 teclas alfabeticas en top row (fila 0)`() {
         val keys = KeyboardData.generate("es")
-        val numberKeys = keys.filter { it.row == 0 }
-        assertEquals("Row 0 should have exactly 10 number keys", 10, numberKeys.size)
-        // Verificar algunas teclas
-        assertTrue("Row 0 should include '1'", numberKeys.any { it.label == "1" })
-        assertTrue("Row 0 should include '0'", numberKeys.any { it.label == "0" })
+        val topRowKeys = keys.filter { it.row == 0 }
+        assertEquals("Row 0 should have 10 letter keys", 10, topRowKeys.size)
+        assertTrue("Row 0 should include 'q'", topRowKeys.any { it.label == "q" })
+        assertTrue("Row 0 should include 'p'", topRowKeys.any { it.label == "p" })
     }
 
     @Test
-    fun `generate - teclado contiene 10 teclas alfabeticas en top row`() {
+    fun `generate - teclado contiene 10 teclas alfabeticas en home row (fila 1)`() {
         val keys = KeyboardData.generate("es")
-        val topRowKeys = keys.filter { it.row == 1 }
-        assertEquals("Row 1 should have 10 letter keys", 10, topRowKeys.size)
-        assertTrue("Top row should include 'q'", topRowKeys.any { it.label == "q" })
-        assertTrue("Top row should include 'p'", topRowKeys.any { it.label == "p" })
+        val homeRowKeys = keys.filter { it.row == 1 }
+        assertEquals("Row 1 should have 10 letter keys", 10, homeRowKeys.size)
+        assertTrue("Row 1 should include 'a'", homeRowKeys.any { it.label == "a" })
+        assertTrue("Row 1 should include 'ñ'", homeRowKeys.any { it.label == "ñ" })
     }
 
     @Test
-    fun `generate - teclado tiene 5 filas`() {
+    fun `generate - teclado tiene 4 filas`() {
         val keys = KeyboardData.generate("es")
         val rows = keys.map { it.row }.distinct().sorted()
-        assertEquals("Should have 5 rows (0-4)", listOf(0, 1, 2, 3, 4), rows)
+        assertEquals("Should have 4 rows (0-3)", listOf(0, 1, 2, 3), rows)
     }
 
     // ═══════════════════════════════════════
@@ -74,44 +73,44 @@ class KeyboardDataTest {
     // ═══════════════════════════════════════
 
     @Test
-    fun `generate - incluye tecla shift en fila 3`() {
+    fun `generate - incluye tecla shift en fila 2`() {
         val keys = KeyboardData.generate("es")
         val shiftKey = keys.find { it.code == KeyCode.SHIFT }
         assertNotNull("Keyboard should have SHIFT key", shiftKey)
-        assertEquals("SHIFT should be in row 3 (bottom)", 3, shiftKey!!.row)
+        assertEquals("SHIFT should be in row 2 (bottom)", 2, shiftKey!!.row)
         assertEquals("SHIFT should be at column 0", 0, shiftKey.col)
         assertEquals("SHIFT label should be '⇧'", "⇧", shiftKey.label)
     }
 
     @Test
-    fun `generate - incluye tecla backspace al final de fila 3`() {
+    fun `generate - incluye tecla backspace al final de fila 2`() {
         val keys = KeyboardData.generate("es")
         val backspaceKey = keys.find { it.code == KeyCode.BACKSPACE }
         assertNotNull("Keyboard should have BACKSPACE key", backspaceKey)
-        assertEquals("BACKSPACE should be in row 3", 3, backspaceKey!!.row)
+        assertEquals("BACKSPACE should be in row 2", 2, backspaceKey!!.row)
         assertEquals("BACKSPACE label should be '⌫'", "⌫", backspaceKey.label)
     }
 
     @Test
-    fun `generate - incluye tecla enter en fila 4`() {
+    fun `generate - incluye tecla enter en fila 3`() {
         val keys = KeyboardData.generate("es")
         val enterKey = keys.find { it.code == KeyCode.ENTER }
         assertNotNull("Keyboard should have ENTER key", enterKey)
-        assertEquals("ENTER should be in row 4 (space)", 4, enterKey!!.row)
+        assertEquals("ENTER should be in row 3 (space)", 3, enterKey!!.row)
         assertEquals("ENTER label should be '↵'", "↵", enterKey.label)
     }
 
     @Test
-    fun `generate - incluye tecla espacio en fila 4`() {
+    fun `generate - incluye tecla espacio en fila 3`() {
         val keys = KeyboardData.generate("es")
         val spaceKey = keys.find { it.code == KeyCode.SPACE }
         assertNotNull("Keyboard should have SPACE key", spaceKey)
-        assertEquals("SPACE should be in row 4", 4, spaceKey!!.row)
+        assertEquals("SPACE should be in row 3", 3, spaceKey!!.row)
         assertTrue("SPACE label should be empty string", spaceKey!!.label.isEmpty())
     }
 
     @Test
-    fun `generate - incluye teclas de coma y punto en fila 4`() {
+    fun `generate - incluye teclas de coma y punto en fila 3`() {
         val keys = KeyboardData.generate("es")
         assertNotNull("Keyboard should have COMMA key", keys.find { it.code == KeyCode.COMMA })
         assertNotNull("Keyboard should have PERIOD key", keys.find { it.code == KeyCode.PERIOD })
@@ -126,11 +125,10 @@ class KeyboardDataTest {
     // ═══════════════════════════════════════
 
     @Test
-    fun `generate - numero total de teclas es 42`() {
-        // Row 0: 10 + Row 1: 10 + Row 2: 10 + Row 3: 9 + Row 4: 5 = 44
-        // Esperado: 10 + 10 + 10 + 9 + 5 = 44
+    fun `generate - numero total de teclas es 34`() {
+        // Row 0: 10 + Row 1: 10 + Row 2: 9 + Row 3: 5 = 34
         val keys = KeyboardData.generate("es")
-        assertEquals("Total keys should be 44 (10+10+10+9+5)", 44, keys.size)
+        assertEquals("Total keys should be 34 (10+10+9+5)", 34, keys.size)
     }
 
     @Test
@@ -139,9 +137,8 @@ class KeyboardDataTest {
         val rowCounts = keys.groupBy { it.row }.mapValues { it.value.size }
         assertEquals("Row 0 should have 10 keys", 10, rowCounts[0])
         assertEquals("Row 1 should have 10 keys", 10, rowCounts[1])
-        assertEquals("Row 2 should have 10 keys", 10, rowCounts[2])
-        assertEquals("Row 3 should have 9 keys", 9, rowCounts[3])
-        assertEquals("Row 4 should have 5 keys", 5, rowCounts[4])
+        assertEquals("Row 2 should have 9 keys", 9, rowCounts[2])
+        assertEquals("Row 3 should have 5 keys", 5, rowCounts[3])
     }
 
     @Test
@@ -212,11 +209,11 @@ class KeyboardDataTest {
     }
 
     @Test
-    fun `layoutKeys - tecla espaciadora es mas ancha que las otras en fila 4`() {
+    fun `layoutKeys - tecla espaciadora es mas ancha que las otras en fila 3`() {
         val keys = KeyboardData.generate("es")
         val laidOut = KeyboardData.layoutKeys(keys, 720f, 400f)
 
-        val spaceRow = laidOut.filter { it.row == 4 }
+        val spaceRow = laidOut.filter { it.row == 3 }
         val spaceKey = spaceRow.first { it.code == KeyCode.SPACE }
         val langKey = spaceRow.first { it.code == KeyCode.SWITCH_LANG }
 
@@ -230,11 +227,11 @@ class KeyboardDataTest {
     }
 
     @Test
-    fun `layoutKeys - teclas shift y backspace mas anchas en fila 3`() {
+    fun `layoutKeys - teclas shift y backspace mas anchas en fila 2`() {
         val keys = KeyboardData.generate("es")
         val laidOut = KeyboardData.layoutKeys(keys, 720f, 400f)
 
-        val bottomRow = laidOut.filter { it.row == 3 }
+        val bottomRow = laidOut.filter { it.row == 2 }
         val shiftKey = bottomRow.first { it.code == KeyCode.SHIFT }
         val backspaceKey = bottomRow.first { it.code == KeyCode.BACKSPACE }
         val letterKey = bottomRow.first { it.code == 'c'.code }

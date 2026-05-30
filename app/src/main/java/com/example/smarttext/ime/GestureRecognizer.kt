@@ -156,6 +156,7 @@ class GestureRecognizer {
     private fun findNearestKey(point: PointF, keys: List<Key>): String? {
         var bestKey: String? = null
         var bestDist = Float.MAX_VALUE
+        var refWidth = 50f
 
         // Only consider letter keys and ñ for gesture typing
         for (key in keys) {
@@ -166,61 +167,66 @@ class GestureRecognizer {
             val dy = point.y - cy
             val d = dx * dx + dy * dy
 
-            // Weighted: prefer keys that are closer
             if (d < bestDist) {
                 bestDist = d
                 bestKey = key.label
+                refWidth = key.width
             }
         }
 
         // Only return if close enough (within KEY_HIT_RADIUS times the key width)
-        return bestKey
+        val maxDistSq = (KEY_HIT_RADIUS * refWidth) * (KEY_HIT_RADIUS * refWidth)
+        return if (bestDist <= maxDistSq) bestKey else null
     }
 
     /**
      * Generate word candidates from a swipe pattern.
      *
-     * Uses PredictorEngine to find words that match:
-     * - Prefix match on first few characters
-     * - Levenshtein fuzzy match on full pattern
-     * - Combined with frequency for ranking
+     * Uses PredictorEngine.predict() which already has FuzzyScorer with
+     * Levenshtein distance, frequency scoring, and context weighting.
+     * This is more robust than the previous manual scoring approach.
      */
     private fun generateCandidates(
         pattern: String,
         predictor: PredictorEngine,
         topK: Int
     ): List<GestureResult> {
-        // Strategy 1: Use first 2-3 chars as prefix with PredictorEngine
         val results = mutableMapOf<String, Float>()
 
-        if (pattern.length >= 2) {
-            // Try with first 2-3 chars as prefix
-            val prefixLen = minOf(3, pattern.length)
-            val prefix = pattern.substring(0, prefixLen)
-            val prefixResults = predictor.searchPrefix(prefix)
-            for (we in prefixResults) {
-                if (we.word.length > MAX_GESTURE_WORD_LENGTH) continue
-                val matchScore = scoreWord(we.word, pattern, we.frequency)
-                if (matchScore > 0) {
-                    results[we.word] = results.getOrDefault(we.word, 0f) + matchScore
-                }
-            }
+        // Use PredictorEngine's predict() with the full pattern as "currentWord"
+        // This leverages FuzzyScorer (Levenshtein + freq + context) for matching
+        val predictions = predictor.predict(pattern, null, topK * 3)
+        for ((i, word) in predictions.withIndex()) {
+            if (word.length > MAX_GESTURE_WORD_LENGTH) continue
+            // Predict already returns FuzzyScorer-ranked results; assign descending scores
+            // so they outrank any prefix-fallback results
+            results[word] = (100f - i * 2f).coerceAtLeast(50f)
         }
 
-        // Strategy 2: Levenshtein on all shorter words
-        if (results.size < topK * 2) {
-            val broadCandidates = mutableListOf<WordEntry>()
-            // Search with single char prefix to get broad results
-            if (pattern.isNotEmpty()) {
-                val firstChar = pattern.substring(0, 1)
-                broadCandidates.addAll(predictor.searchPrefix(firstChar, minLength = pattern.length - 1))
-            }
-            for (we in broadCandidates.take(200)) {
-                if (we.word in results) continue
-                if (we.word.length > MAX_GESTURE_WORD_LENGTH) continue
+        if (results.size < topK && pattern.length >= 2) {
+            // Strategy 2: try each character in pattern as a prefix
+            val first = pattern.first().toString()
+            val second = if (pattern.length > 1) pattern.substring(0, 2) else first
+            
+            // Try 2-char prefix first
+            val prefixResults = predictor.searchPrefix(second, minLength = pattern.length - 1)
+            for (we in prefixResults.take(100)) {
+                if (we.word in results || we.word.length > MAX_GESTURE_WORD_LENGTH) continue
                 val matchScore = scoreWord(we.word, pattern, we.frequency)
-                if (matchScore > 0) {
-                    results[we.word] = results.getOrDefault(we.word, 0f) + matchScore
+                if (matchScore > 0f) {
+                    results[we.word] = matchScore
+                }
+            }
+
+            // Try single char prefix if still not enough
+            if (results.size < topK) {
+                val broadResults = predictor.searchPrefix(first)
+                for (we in broadResults.take(150)) {
+                    if (we.word in results || we.word.length > MAX_GESTURE_WORD_LENGTH) continue
+                    val matchScore = scoreWord(we.word, pattern, we.frequency)
+                    if (matchScore > 0f) {
+                        results[we.word] = matchScore
+                    }
                 }
             }
         }
@@ -243,31 +249,34 @@ class GestureRecognizer {
      * Returns score 0-100.
      */
     private fun scoreWord(word: String, pattern: String, frequency: Int): Float {
-        if (word.length < pattern.length - 1 || word.length > pattern.length + 3) {
+        if (word.length < pattern.length - 1 || word.length > pattern.length + 2) {
             return 0f
         }
 
-        // Check subsequence match (all chars in pattern appear in order in word)
+        // Subsequence check: all chars in pattern appear in order in the word
         var pi = 0
         for (ch in word) {
             if (pi < pattern.length && ch == pattern[pi]) pi++
         }
         val subsequenceRatio = pi.toFloat() / pattern.length
 
-        if (subsequenceRatio < 0.6f) return 0f
+        // More permissive: accept partial matches with frequency boost
+        if (subsequenceRatio < 0.4f) return 0f
 
         // Levenshtein distance
         val lev = levenshtein(word, pattern)
+        val maxLen = maxOf(word.length, pattern.length, 1)
 
-        // Score calculation
-        val lengthScore = 1f - (kotlin.math.abs(word.length - pattern.length).toFloat() / maxOf(word.length, pattern.length, 1))
-        val levScore = 1f - (lev.toFloat() / maxOf(word.length, pattern.length, 1))
+        // Score components
+        val levScore = 1f - (lev.toFloat() / maxLen)
+        val lengthScore = 1f - (kotlin.math.abs(word.length - pattern.length).toFloat() / maxLen)
         val freqScore = minOf(1f, kotlin.math.log10((frequency + 1).toFloat()) / 4f)
 
-        val finalScore = (subsequenceRatio * 0.3f +
-                         levScore * 0.35f +
-                         lengthScore * 0.15f +
-                         freqScore * 0.2f) * 100f
+        // Weighted score: emphasize frequency for common words, subsequence for match quality
+        val finalScore = (subsequenceRatio * 0.25f +
+                         levScore * 0.25f +
+                         lengthScore * 0.10f +
+                         freqScore * 0.40f) * 100f
 
         return finalScore
     }
