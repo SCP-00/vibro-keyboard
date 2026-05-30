@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartText Keyboard — IME Predictivo con IA</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⌨️</text></svg>" />
+  <style>
+    :root {
+      --bg: #0f0f1a;
+      --card: #1a1a2e;
+      --accent: #6c63ff;
+      --accent2: #00d4aa;
+      --text: #e0e0f0;
+      --text-dim: #8888aa;
+      --border: #2a2a4a;
+      --gradient: linear-gradient(135deg, #6c63ff, #00d4aa);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+    /* Hero */
+    .hero {
+      padding: 80px 0 60px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 30% 50%, rgba(108,99,255,0.08) 0%, transparent 50%),
+                  radial-gradient(circle at 70% 50%, rgba(0,212,170,0.06) 0%, transparent 50%);
+      animation: float 20s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      33% { transform: translate(30px, -30px) rotate(1deg); }
+      66% { transform: translate(-20px, 20px) rotate(-1deg); }
+    }
+
+    .hero-content { position: relative; z-index: 1; }
+    .hero-icon { font-size: 64px; margin-bottom: 16px; display: block; }
+    .hero h1 {
+      font-size: 3rem;
+      font-weight: 800;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+    }
+    .hero p {
+      font-size: 1.2rem;
+      color: var(--text-dim);
+      max-width: 600px;
+      margin: 0 auto 32px;
+    }
+    .hero-badges {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 32px;
+    }
+    .hero-badges img { height: 28px; border-radius: 4px; }
+
+    .btn-group {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 32px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: var(--gradient);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(108,99,255,0.3);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(108,99,255,0.4);
+    }
+    .btn-secondary {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    /* Sections */
+    section { padding: 60px 0; }
+    .section-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 40px;
+      text-align: center;
+    }
+    .section-title span {
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Features grid */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .feature-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      transition: all 0.3s ease;
+    }
+    .feature-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(108,99,255,0.15);
+    }
+    .feature-card .icon { font-size: 32px; margin-bottom: 12px; display: block; }
+    .feature-card h3 { font-size: 1.1rem; margin-bottom: 8px; }
+    .feature-card p { color: var(--text-dim); font-size: 0.9rem; }
+
+    /* Tech stack */
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .tech-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+    .tech-item .icon { font-size: 28px; display: block; margin-bottom: 8px; }
+    .tech-item .label { font-size: 0.85rem; color: var(--text-dim); }
+    .tech-item .value { font-weight: 600; }
+
+    /* Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+    }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+    }
+    .stat-card .number {
+      font-size: 2rem;
+      font-weight: 800;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .stat-card .label { color: var(--text-dim); font-size: 0.85rem; margin-top: 4px; }
+
+    /* Architecture diagram */
+    .arch-diagram {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      overflow-x: auto;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.8rem;
+      line-height: 1.5;
+      white-space: pre;
+    }
+
+    /* Releases table */
+    .release-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .release-table th, .release-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .release-table th { color: var(--text-dim); font-weight: 500; font-size: 0.85rem; }
+    .release-table td { font-size: 0.95rem; }
+    .tag {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .tag-latest { background: rgba(0,212,170,0.2); color: #00d4aa; }
+    .tag-old { background: rgba(255,255,255,0.05); color: var(--text-dim); }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 40px 0;
+      border-top: 1px solid var(--border);
+      color: var(--text-dim);
+      font-size: 0.9rem;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 2rem; }
+      .hero p { font-size: 1rem; }
+      .hero { padding: 50px 0 40px; }
+      section { padding: 40px 0; }
+      .btn { padding: 12px 24px; font-size: 0.9rem; width: 100%; justify-content: center; }
+      .btn-group { flex-direction: column; }
+    }
+
+    /* Animations */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeIn 0.6s ease forwards;
+    }
+    @keyframes fadeIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in:nth-child(2) { animation-delay: 0.1s; }
+    .fade-in:nth-child(3) { animation-delay: 0.2s; }
+    .fade-in:nth-child(4) { animation-delay: 0.3s; }
+
+    /* QR */
+    .qr-section { text-align: center; margin: 32px 0; }
+    .qr-section img { border-radius: 12px; border: 2px solid var(--border); width: 160px; height: 160px; }
+    .qr-section p { color: var(--text-dim); font-size: 0.9rem; margin-top: 8px; }
+  </style>
+</head>
+<body>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container hero-content">
+      <span class="hero-icon">⌨️</span>
+      <h1>SmartText Keyboard</h1>
+      <p>IME Predictivo con Swipe Typing, Lógica Difusa y Dynamic Time Warping — 100% offline</p>
+      <div class="hero-badges">
+        <img src="https://img.shields.io/badge/📲%20APK-v1.6-brightgreen?style=for-the-badge&logo=android" alt="v1.6" />
+        <img src="https://img.shields.io/badge/Tests-137%20✔️-blue?style=for-the-badge" alt="Tests" />
+        <a href="../ARCHITECTURE.md#-gesturerecognizer-swipeglide--v15-dtw"><img src="https://img.shields.io/badge/DTW-Gesture%20Matching-ff69b4?style=for-the-badge" alt="DTW" /></a>
+        <img src="https://img.shields.io/badge/APK-7.9%20MB-00d4aa?style=for-the-badge" alt="Size" />
+      </div>
+      <div class="btn-group">
+        <a href="https://github.com/SCP-00/Android_text_predicto_board/releases/latest/download/app-release.apk" class="btn btn-primary">
+          📲 Descargar APK v1.6
+        </a>
+        <a href="https://github.com/SCP-00/Android_text_predicto_board" class="btn btn-secondary">
+          Ver código fuente →
+        </a>
+      </div>
+      <div class="qr-section">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://github.com/SCP-00/Android_text_predicto_board/releases/latest/download/app-release.apk" alt="QR Code" />
+        <p>Escanea desde tu celular para descargar e instalar</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section>
+    <div class="container">
+      <h2 class="section-title"><span>✨ Características</span></h2>
+      <div class="features-grid">
+        <div class="feature-card fade-in">
+          <span class="icon">⌨️</span>
+          <h3>Teclado QWERTY Completo</h3>
+          <p>5 filas: numérica + QWERTY + home row + bottom + espacio. Con tecla Ñ para español.</p>
+        </div>
+        <div class="feature-card fade-in">
+          <span class="icon">🔮</span>
+          <h3>Predicción en Tiempo Real</h3>
+          <p>Sugerencias mientras escribes con sistema de inferencia difusa Mamdani de 7 reglas.</p>
+        </div>
+        <div class="feature-card fade-in">
+          <span class="icon">🖱️</span>
+          <h3>DTW Gesture Typing</h3>
+          <p>Dynamic Time Warping para matching preciso de rutas de deslizamiento. 45% peso DTW en scoring.</p>
+        </div>
+        <div class="feature-card fade-in">
+          <span class="icon">🧠</span>
+          <h3>Autocorrección Inteligente</h3>
+          <p>QWERTY adyacente + inserción de letras + subsequence matching guiado por patrón de swipe.</p>
+        </div>
+        <div class="feature-card fade-in">
+          <span class="icon">🌐</span>
+          <h3>Bilingüe (ES/EN)</h3>
+          <p>Cambio instantáneo entre español e inglés. 10,004 palabras en español, 1,844 en inglés.</p>
+        </div>
+        <div class="feature-card fade-in">
+          <span class="icon">📴</span>
+          <h3>100% Offline</h3>
+          <p>Todo el procesamiento es local. Sin internet, sin servidores, sin tracking. Privacidad total.</p>
+        </div>
+        <div class="feature-card fade-in">
+          <span class="icon">⚡</span>
+          <h3>Motor Kotlin Nativo</h3>
+          <p>Sin Python/Chaquopy. APK de solo 7.9 MB. Inicialización en &lt;10ms. Predicción en &lt;1ms.</p>
+        </div>
+        <div class="feature-card fade-in">
+          <span class="icon">🎯</span>
+          <h3>Aprendizaje Local</h3>
+          <p>Se adapta a las palabras que más usas. Persistencia en user_data.json local.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <section>
+    <div class="container">
+      <h2 class="section-title"><span>📊 En Números</span></h2>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="number">137</div><div class="label">Tests Unitarios</div></div>
+        <div class="stat-card"><div class="number">7.9</div><div class="label">MB APK Release</div></div>
+        <div class="stat-card"><div class="number">11,848</div><div class="label">Palabras en Corpus</div></div>
+        <div class="stat-card"><div class="number">7</div><div class="label">Reglas Mamdani</div></div>
+        <div class="stat-card"><div class="number">&lt;1</div><div class="label">ms Predicción</div></div>
+        <div class="stat-card"><div class="number">&lt;10</div><div class="label">ms Inicialización</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Architecture -->
+  <section>
+    <div class="container">
+      <h2 class="section-title"><span>🏗️ Arquitectura</span></h2>
+      <div class="arch-diagram">
+┌─────────────────────────────────────────────────────┐
+│               SmartIME (InputMethodService)           │
+│  ┌───────────────────────────────────────────────┐  │
+│  │          SmartKeyboardView (Canvas)            │  │
+│  │  ┌──────────┐ ┌──────────┐ ┌────────────┐   │  │
+│  │  │   Keys   │ │  Swipe   │ │ Candidate  │   │  │
+│  │  │  Layout  │ │  Trail   │ │   Strip    │   │  │
+│  │  │ Data.kt  │ │ Bezier   │ │  Predict   │   │  │
+│  │  │          │ │ DTW Recog│ │  Strip     │   │  │
+│  │  └──────────┘ └──────────┘ └────────────┘   │  │
+│  └─────────────────┬─────────────────────────────┘  │
+│                    │                                  │
+│  ┌─────────────────▼─────────────────────────────┐  │
+│  │            PredictorEngine (Kotlin)            │  │
+│  │  ┌──────────┐ ┌────────┐ ┌───────────────┐  │  │
+│  │  │ Sorted   │ │Bigrams │ │  FuzzyScorer  │  │  │
+│  │  │ List+    │ │Context │ │ · Levenshtein │  │  │
+│  │  │ Bisect   │ │        │ │ · Mamdani     │  │  │
+│  │  │ LRU      │ │        │ │ · QWERTY Adj  │  │  │
+│  │  └──────────┘ └────────┘ └───────────────┘  │  │
+│  └─────────────────┬─────────────────────────────┘  │
+│                    │                                  │
+│  ┌─────────────────▼─────────────────────────────┐  │
+│  │              Data Layer                        │  │
+│  │  ┌──────────────┐  ┌──────────────────┐     │  │
+│  │  │ corpus.json  │  │ user_data.json   │     │  │
+│  │  │  (assets/)   │  │  (filesDir)      │     │  │
+│  │  └──────────────┘  └──────────────────┘     │  │
+│  └───────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────┘
+      </div>
+    </div>
+  </section>
+
+  <!-- Tech -->
+  <section>
+    <div class="container">
+      <h2 class="section-title"><span>🛠️ Stack Tecnológico</span></h2>
+      <div class="tech-grid">
+        <div class="tech-item"><span class="icon">📱</span><div class="value">Kotlin 2.3.20</div><div class="label">Lenguaje</div></div>
+        <div class="tech-item"><span class="icon">🎨</span><div class="value">Jetpack Compose</div><div class="label">UI Framework</div></div>
+        <div class="tech-item"><span class="icon">🖌️</span><div class="value">Canvas + Paint</div><div class="label">IME View</div></div>
+        <div class="tech-item"><span class="icon">🧠</span><div class="value">Kotlin Nativo</div><div class="label">Motor IA</div></div>
+        <div class="tech-item"><span class="icon">🏗️</span><div class="value">Gradle 9.1</div><div class="label">Build</div></div>
+        <div class="tech-item"><span class="icon">📊</span><div class="value">API 24+ (7.0)</div><div class="label">SDK Mínimo</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Releases -->
+  <section>
+    <div class="container">
+      <h2 class="section-title"><span>📦 Releases</span></h2>
+      <div style="overflow-x:auto;">
+        <table class="release-table">
+          <thead>
+            <tr><th>Versión</th><th>Novedades</th><th>Descarga</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="tag tag-latest">v1.6</span></td>
+              <td>Gesture-aware autocorrection, QWERTY adjacency, 137 tests, GitHub Pages</td>
+              <td><a href="https://github.com/SCP-00/Android_text_predicto_board/releases/latest/download/app-release.apk">📲 APK</a></td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-old">v1.5</span></td>
+              <td>DTW gesture typing, English layout fix, bezier swipe trail</td>
+              <td><a href="https://github.com/SCP-00/Android_text_predicto_board/releases/tag/v1.5">Ver</a></td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-old">v1.4</span></td>
+              <td>Glide typing improvements, popup preview, autocorrection engine</td>
+              <td><a href="https://github.com/SCP-00/Android_text_predicto_board/releases/tag/v1.4">Ver</a></td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-old">v1.3</span></td>
+              <td>Long-press accented chars, haptic feedback, ripple effect</td>
+              <td><a href="https://github.com/SCP-00/Android_text_predicto_board/releases/tag/v1.3">Ver</a></td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-old">v1.2</span></td>
+              <td>Python→Kotlin migration, 107 tests, Canvas keyboard, swipe typing</td>
+              <td><a href="https://github.com/SCP-00/Android_text_predicto_board/releases/tag/v1.2">Ver</a></td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-old">v1.1</span></td>
+              <td>Kotlin native migration, Chaquopy removal, FuzzyScorer</td>
+              <td><a href="https://github.com/SCP-00/Android_text_predicto_board/releases/tag/v1.1">Ver</a></td>
+            </tr>
+            <tr>
+              <td><span class="tag tag-old">v1.0</span></td>
+              <td>Initial release with Python/Chaquopy prototype</td>
+              <td><a href="https://github.com/SCP-00/Android_text_predicto_board/releases/tag/v1.0">Ver</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section style="text-align:center; padding-bottom:80px;">
+    <div class="container">
+      <h2 class="section-title"><span>🚀 Empieza Ahora</span></h2>
+      <p style="color:var(--text-dim); max-width:500px; margin:0 auto 32px;">
+        Descarga SmartText Keyboard en tu Android, actívalo como método de entrada y empieza a escribir con predicción inteligente y gestos de deslizamiento.
+      </p>
+      <div class="btn-group">
+        <a href="https://github.com/SCP-00/Android_text_predicto_board/releases/latest/download/app-release.apk" class="btn btn-primary">
+          📲 Descargar APK
+        </a>
+        <a href="https://github.com/SCP-00/Android_text_predicto_board/blob/main/README.md" class="btn btn-secondary">
+          📖 Leer Documentación
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      <p>
+        <strong>SmartText Keyboard</strong> — Proyecto académico de Computación Blanda · Mayo 2026
+      </p>
+      <p style="margin-top:8px;">
+        <a href="https://github.com/SCP-00/Android_text_predicto_board">GitHub</a> ·
+        <a href="https://github.com/SCP-00">Víctor Alejandro Buendía</a>
+      </p>
+    </div>
+  </footer>
+
+</body>
+</html>

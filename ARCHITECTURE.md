@@ -19,9 +19,9 @@
 │  │  │                                                      │  │      │
 │  │  │  ┌──────────────┐  ┌──────────────┐  ┌──────────┐  │  │      │
 │  │  │  │  Key Drawing  │  │ Swipe Trail  │  │Candidate │  │  │      │
-│  │  │  │  · 47 teclas  │  │ · Path render│  │ Strip    │  │  │      │
-│  │  │  │  · 5 filas    │  │ · Dot points │  │ (5 chips)│  │  │      │
-│  │  │  │  · Press anim │  │ · Glow effect│  │          │  │  │      │
+│  │  │  │  · 47 teclas  │  │ · Bezier     │  │ Strip    │  │  │      │
+│  │  │  │  · 5 filas    │  │   quadTo     │  │ (5 chips)│  │  │      │
+│  │  │  │  · Press anim │  │ · Dot points │  │          │  │  │      │
 │  │  │  └──────┬───────┘  └──────┬───────┘  └─────┬────┘  │  │      │
 │  │  └─────────┼─────────────────┼─────────────────┼───────┘  │      │
 │  │            │                 │                 │           │      │
@@ -38,9 +38,10 @@
 │  │  │                                                      │  │      │
 │  │  │  · commitText(char)    → escribe carácter           │  │      │
 │  │  │  · commitWord(word)    → autocompleta palabra       │  │      │
+│  │  │  · autocorrectCurrentWord() → gesture-aware         │  │      │
 │  │  │  · deleteBackward()    → borra un carácter          │  │      │
 │  │  │  · performEnter()      → salto de línea             │  │      │
-│  │  │  · onLanguageChanged() → recarga predictor          │  │      │
+│  │  │  · lastGesturePattern  → guía autocorrección        │  │      │
 │  │  │  · Thread safety: @Volatile + @Synchronized + scope │  │      │
 │  │  └──────────────────────┬──────────────────────────────┘  │      │
 │  │                         │                                  │      │
@@ -49,9 +50,11 @@
 │  │  │                                                      │  │      │
 │  │  │  ┌──────────────┐  ┌──────────────┐  ┌──────────┐  │  │      │
 │  │  │  │ Sorted List  │  │   Bigrams    │  │FuzzyScore│  │  │      │
-│  │  │  │ · 10K words  │  │ · 295 (ES)   │  │·Levensht.│  │  │      │
-│  │  │  │ · binary srch│  │ · 759 (EN)   │  │·Mamdani  │  │  │      │
+│  │  │  │ · 10K words  │  │ · 44 (ES)    │  │·Levensht.│  │  │      │
+│  │  │  │ · binary srch│  │ · 151 (EN)   │  │·Mamdani  │  │  │      │
 │  │  │  │ · LRU cache  │  │ · context    │  │·Centroid │  │  │      │
+│  │  │  │              │  │              │  │·QWERTY   │  │  │      │
+│  │  │  │              │  │              │  │ Adjacent │  │  │      │
 │  │  │  └──────────────┘  └──────────────┘  └──────────┘  │  │      │
 │  │  └──────────────────────┬──────────────────────────────┘  │      │
 │  │                         │                                  │      │
@@ -161,21 +164,47 @@ SmartKeyboardView.onTouchEvent(ACTION_UP)
     ▼
 GestureRecognizer.recognize(keys, predictor, 5)
     │
-    ├── interpolatePoints(points) → ~50 puntos interpolados
-    ├── traceKeys(interpolated, keys) → ["c","a","s","a"]
-    ├── generateCandidates("casa", predictor)
-    │   ├── Estrategia 1: searchPrefix("cas") → fuzzy score
-    │   ├── Estrategia 2: searchPrefix("c") + Levenshtein
-    │   └── scoreWord(word, pattern, freq)
-    │       ├── subsequenceRatio ≥ 0.6
-    │       ├── Levenshtein distance
-    │       └── score = subseq*0.3 + lev*0.35 + len*0.15 + freq*0.2
+    ├── resamplePath(points) → 40 puntos equidistantes
+    ├── computeDTWScore(touchPath, idealPath) → DTW matrix 2-row
+    ├── isSubsequenceMatch(pattern, word) → skip tolerance
+    ├── generateCandidates(sequence, predictor)
+    │   ├── Estrategia 1: predictor.predict() → fuzzy score
+    │   ├── Estrategia 2: DTW spatial matching
+    │   └── Estrategia 3: prefix fallback
     │
     └── best = recognized.first().word
-        └── ime.commitWord("casa")
+        └── ime.commitWord("casa", gesturePattern, dtwScore)
+            ├── SmartIME.lastGesturePattern = "casa"
             ├── deleteSurroundingText(currentInputWord.length)
             ├── commitText("casa ", 1)
             └── updateFrequency("casa") [scope.launch]
+```
+
+### 4. Autocorrección Gesture-Aware
+
+```
+Usuario termina palabra con espacio/puntuación
+    │
+    ▼
+SmartIME.autocorrectCurrentWord()
+    │
+    ├── ¿Hay lastGesturePattern?
+    │   └── Sí → autocorrect(typedWord, gesturePattern, dtwScore)
+    │       ├── PredictorEngine.suggestCorrections(word)
+    │       │   ├── Strategy 1: Prefix + FuzzyScorer
+    │       │   ├── Strategy 2: Levenshtein fallback
+    │       │   ├── Strategy 3: QWERTY adjacent substitution
+    │       │   │   └── Para cada char, probar teclas vecinas
+    │       │   │       ej: "comio" → "comio","domio","fomio","cpmio"...
+    │       │   ├── Strategy 4: Single-letter insertion
+    │       │   │   └── Insertar letras comunes (aeiornstl)
+    │       │   │       ej: "probema" → "problema"
+    │       │   └── Strategy 5: Gesture subsequence guide
+    │       │       └── Filtrar por isSubsequenceMatch(gesture, word)
+    │       └── Score combinado: menor threshold si gesture es confiable
+    │
+    └── No → autocorrect(typedWord)
+        └── Solo prefijo + Levenshtein + fuzzy
 ```
 
 ---
@@ -239,6 +268,8 @@ Fila 3: ⇧ z x c v b n m ⌫            [Bottom + Shift/Backspace]
 Fila 4: 🌐 , ______Espacio______ . ↵  [Space row]
 ```
 
+> **Nota:** En el layout Inglés (EN), la home row tiene **9 teclas** (a s d f g h j k l, sin apóstrofe). La apóstrofe se accede mediante long-press en la tecla coma (`,` → `,':;`).
+
 ### Tipos de Teclas
 
 | Tipo | Código | Comportamiento |
@@ -249,26 +280,88 @@ Fila 4: 🌐 , ______Espacio______ . ↵  [Space row]
 | **Espacio** | -3 | commitText(" ") |
 | **Enter** | -4 | performEnter() → \n |
 | **Switch Lang** | -5 | Cambia idioma, recarga predictor |
-| **Coma** | -7 | commitText(",") |
+| **Coma** | -7 | commitText(",") — long-press: `,':;` |
 | **Punto** | -8 | commitText(".") |
 
 ---
 
-## 🖱️ GestureRecognizer (Swipe/Glide)
+## 🖱️ GestureRecognizer (Swipe/Glide) — v1.5+ DTW
 
 ### Algoritmo
 
 1. **Recolección de puntos** — Durante ACTION_MOVE, saltar puntos muy cercanos (<25px²)
-2. **Interpolación** — Si distancia entre muestras >12px, insertar puntos intermedios
-3. **Trazado de teclas** — Para cada punto interpolado, encontrar tecla más cercana (solo letras)
-4. **Deduplicación** — Eliminar repeticiones consecutivas de la misma tecla
-5. **Generación de candidatos** — Dos estrategias paralelas:
-   - Prefijo de 2-3 chars → searchPrefix → fuzzy score
-   - Primer char + Levenshtein sobre top 200 palabras
-6. **Scoring combinado**:
+2. **Resample** — Reducir/expandir a exactamente **40 puntos equidistantes** para normalizar rutas de cualquier longitud
+3. **Key centers cache** — Centros precomputados de todas las teclas (a-z, ñ, ', à-ÿ) para lookup O(1)
+4. **DTW Path Matching** — Dynamic Time Warping entre la ruta táctil y la ruta ideal (key centers del patrón)
+5. **Generación de candidatos** — 3 estrategias paralelas:
+   - Predictor predict (con prefix)
+   - DTW spatial matching (palabras con ruta similar)
+   - Prefix fallback (primer carácter)
+6. **Scoring combinado v2**:
    ```
-   Score = subseq_ratio × 0.30 + lev_score × 0.35 + length_score × 0.15 + freq_score × 0.20
+   Score = DTW_score × 0.45 + levenshtein × 0.15 + length × 0.10 + frequency × 0.30
    ```
+
+### DTW Implementation
+
+```kotlin
+fun dynamicTimeWarping(seq1: List<PointF>, seq2: List<PointF>): Float {
+    val (n, m) = seq1.size to seq2.size
+    var prev = FloatArray(m) { Float.MAX_VALUE }
+    var curr = FloatArray(m)
+
+    for (i in 0 until n) {
+        curr[0] = pointDist(seq1[i], seq2[0])
+        if (i > 0) curr[0] += prev[0]
+
+        for (j in 1 until m) {
+            val cost = pointDist(seq1[i], seq2[j])
+            val minPrev = min(prev[j], prev[j-1], curr[j-1])
+            curr[j] = cost + minPrev
+        }
+        val temp = prev; prev = curr; curr = temp
+    }
+    return prev[m - 1]
+}
+```
+
+#### Ventajas del DTW sobre el enfoque anterior:
+- **Tolerante a velocidad variable** — El usuario puede deslizar rápido o lento
+- **Sin threshold de subsecuencia** — Ya no depende de un ratio arbitrario
+- **Mejor precisión** — 45% de peso en matching espacial vs 30% de subsecuencia antes
+
+---
+
+## 🤖 Autocorrección Gesture-Aware — v1.6
+
+### Mapa de Adyacencia QWERTY (QWERTY_ADJACENT)
+
+Cada tecla conoce las teclas físicamente adyacentes en el teclado QWERTY:
+
+```
+'q' → [w, a, s]         'a' → [q, w, s, z]
+'w' → [q, e, a, s, d]   's' → [q, w, e, a, d, z, x]
+...
+'ñ' → [l, o, p]          (tecla Ñ en posición española)
+```
+
+### Estrategias de Corrección
+
+| Estrategia | Descripción | Ejemplo |
+|------------|-------------|---------|
+| **Prefijo + Fuzzy** | Binary search + FuzzyScorer | `"cas"` → `casa` |
+| **Levenshtein** | Distancia de edición sobre top-500 | `"kasa"` → `casa` |
+| **QWERTY Adjacent** | Sustituir cada char por teclas vecinas | `"cmion"` → `camión` (c→a) |
+| **Inserción** | Insertar letras comunes (aeiornstl) | `"probema"` → `problema` |
+| **Gesture Subsequence** | Guiar por patrón de deslizamiento | `"casa"` pattern → filtrar candidatos |
+
+### Scoring para Autocorrección
+
+```kotlin
+// Sin gesture: threshold minScore = 15
+// Con gesture de alta confianza: threshold minScore = 10
+// Edit distance máxima: 2 (normal) o 4 (gesture + palabra larga)
+```
 
 ---
 
@@ -290,7 +383,7 @@ Fila 4: 🌐 , ______Espacio______ . ↵  [Space row]
 ## 💾 Persistencia
 
 ### corpus.json (assets/)
-```
+```json
 {
   "en": {
     "unigrams": { "the": 99899, "be": 99898, ... },
@@ -304,7 +397,7 @@ Fila 4: 🌐 , ______Espacio______ . ↵  [Space row]
 ```
 
 ### user_data.json (context.filesDir)
-```
+```json
 { "android": 35, "predictor": 22, "difusa": 15 }
 ```
 
@@ -330,5 +423,7 @@ Fila 4: 🌐 , ______Espacio______ . ↵  [Space row]
 | Fuzzy scoring (1 palabra) | **<0.01ms** | O(1) |
 | Levenshtein (1 par) | **~0.1ms** | O(n·m) |
 | Predicción completa (top-5) | **<1ms** | O(log n + k) |
+| DTW path matching (40×40) | **~0.05ms** | O(n·m) con 2-row |
 | Corrección ortográfica (500 cand.) | **~67ms** | O(500·n·m) |
 | Inicialización del predictor | **<10ms** | O(n·log n) |
+| **Tamaño APK Release** | **~7.9 MB** | -86% vs Chaquopy |

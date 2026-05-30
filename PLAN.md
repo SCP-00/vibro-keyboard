@@ -2,7 +2,7 @@
 
 > **Proyecto:** Teclado Android IME con predicción inteligente, gestos de deslizamiento y lógica difusa
 > **Curso:** Computación Blanda
-> **Técnicas:** Sistemas Difusos, Distancia Levenshtein, Trie, N-gramas, Swipe Gesture Recognition
+> **Técnicas:** Sistemas Difusos, Distancia Levenshtein, DTW, N-gramas, Swipe Gesture Recognition
 > **Plataforma:** Android (Kotlin nativo + Jetpack Compose + Canvas IME)
 
 ---
@@ -23,6 +23,8 @@
 | **Fase 9** | ✅ Completa | Conversión a IME Keyboard completo con swipe typing |
 | **Fase 10** | ✅ Completa | Testing funcional en emuladores |
 | **Fase 11** | ✅ Completa | Entrega final académica — docs, tests, GitHub release |
+| **v1.5** | ✅ **v1.5** | DTW gesture typing, English keyboard layout fix, bezier swipe trail |
+| **v1.6** | ✅ **v1.6** | Gesture-aware autocorrection, 137 tests, GitHub Pages |
 
 ---
 
@@ -38,8 +40,9 @@ Teclado Android IME 100% offline que prediga, corrija texto y permita escritura 
 - ✅ **Offline total:** Sin conexión a internet requerida
 - ✅ **Gama baja:** Optimizado para 2-4 GB RAM, CPU de 2-4 núcleos
 - ✅ **Bilingüe:** Soporte completo para español e inglés
-- ✅ **Tamaño APK:** ~8 MB (release)
+- ✅ **Tamaño APK:** ~7.9 MB (release)
 - ✅ **Respuesta:** Predicción en <1ms (Kotlin nativo)
+- ✅ **DTW Gesture:** Dynamic Time Warping para swipe typing mejorado
 
 ---
 
@@ -65,6 +68,7 @@ Teclado Android IME 100% offline que prediga, corrija texto y permita escritura 
 │  │  ┌──────────┐ ┌──────────┐ ┌──────────────┐ │     │
 │  │  │Key Layout│ │Swipe     │ │Candidate     │ │     │
 │  │  │Data      │ │Recognizer│ │Strip         │ │     │
+│  │  │          │ │(DTW)     │ │              │ │     │
 │  │  └──────────┘ └──────────┘ └──────────────┘ │     │
 │  └──────────────────────────────────────────────┘     │
 │                        │                               │
@@ -74,6 +78,7 @@ Teclado Android IME 100% offline que prediga, corrija texto y permita escritura 
 │  │  │ Sort+    │ │Bigrams │ │ FuzzyScorer    │  │     │
 │  │  │ Bisect   │ │Context │ │ · Levenshtein  │  │     │
 │  │  │          │ │        │ │ · Rule Mamdani │  │     │
+│  │  │          │ │        │ │ · QWERTY Adj   │  │     │
 │  │  └──────────┘ └────────┘ └────────────────┘  │     │
 │  └──────────────────────────────────────────────┘     │
 └──────────────────────────────────────────────────────┘
@@ -84,8 +89,8 @@ Teclado Android IME 100% offline que prediga, corrija texto y permita escritura 
 ## 📚 Fase 2 — Corpus Bilingüe
 
 ### Fuentes de Datos
-- **Inglés:** ~10,000 palabras más frecuentes (sin groserías)
-- **Español:** ~10,000 palabras de uso común
+- **Inglés:** ~1,844 palabras más frecuentes
+- **Español:** ~10,004 palabras de uso común
 
 ### Estadísticas del Corpus
 
@@ -117,6 +122,12 @@ Las frecuencias siguen una distribución Zipfiana donde `freq ∝ 1/(rank+1)`, a
 - Persiste en `user_data.json` en el directorio de archivos de la app
 - Thread-safe con `@Synchronized`
 
+#### 4. Autocorrección Gesture-Aware (v1.6)
+- Mapa QWERTY_ADJACENT con teclas vecinas físicas
+- Sustitución por tecla adyacente como estrategia de corrección
+- Inserción de letras comunes omitidas en swipe
+- Subsequence matching guiado por patrón de deslizamiento
+
 ### Flujo de Predicción
 
 ```
@@ -144,10 +155,16 @@ Usuario escribe → extraer palabra actual y anterior
 - Implementación O(n²) vectorizada con arreglos de Int
 - Reducida a top 500 palabras para rendimiento en tiempo real
 
+### Dynamic Time Warping (DTW) — v1.5+
+- Resample de rutas táctiles a 40 puntos equidistantes
+- Matriz DTW optimizada de 2 filas para eficiencia O(n·m)
+- Scoring combinado: 45% DTW + 15% Levenshtein + 10% longitud + 30% frecuencia
+- Cache de key centers para lookup O(1)
+
 ### Gestos de Deslizamiento (Swipe/Glide)
-- Interpolación de puntos táctiles (12px entre muestras)
+- Recolección de puntos táctiles con skip de puntos cercanos
 - Trazado de teclas visitadas durante el gesto
-- Scoring combinado: subsecuencia (30%) + Levenshtein (35%) + longitud (15%) + frecuencia (20%)
+- 3 estrategias de generación de candidatos en paralelo
 
 ---
 
@@ -164,7 +181,8 @@ Usuario escribe → extraer palabra actual y anterior
 - **5 filas:** Números + QWERTY + Home + Bottom + Space/Enter
 - **Teclas especiales:** Shift, Backspace, Enter, Switch Lang, Ñ
 - **Candidate strip:** Barra superior con 5 sugerencias tappeables
-- **Swipe trail:** Línea azul semitransparente con dots en puntos táctiles
+- **Swipe trail:** Curvas Bezier (quadTo) para trail suave
+- **Layout inglés:** Home row de 9 teclas (sin apóstrofe)
 - **Tap vs Swipe:** Threshold de 30px, modo gestual automático
 
 ---
@@ -196,6 +214,7 @@ Usuario escribe → extraer palabra actual y anterior
 | **Corrección ortográfica (Levenshtein)** | ✅ Funcional |
 | **Tiempo promedio (prefijo)** | **~0.06ms** |
 | **Tiempo promedio (corrección)** | **~67ms** |
+| **DTW matching (40×40)** | **~0.05ms** |
 
 ---
 
@@ -217,7 +236,7 @@ Reescribir todo el motor predictivo en Kotlin puro:
 ### Resultados
 | Métrica | Antes (Python/Chaquopy) | Después (Kotlin nativo) |
 |---------|------------------------|------------------------|
-| **Tamaño APK** | ~58 MB | **~8 MB** (-86%) |
+| **Tamaño APK** | ~58 MB | **~7.9 MB** (-86%) |
 | **Init predictor** | ~1-2s | **<10ms** |
 | **Predicción** | ~30-50ms | **<1ms** |
 | **RAM adicional** | ~30MB | **~1MB** |
@@ -228,9 +247,9 @@ Reescribir todo el motor predictivo en Kotlin puro:
 
 ### Implementación
 1. **SmartIME.kt** — InputMethodService con ciclo de vida completo
-2. **SmartKeyboardView.kt** — Vista Canvas con renderizado de teclas, trail, candidate strip
+2. **SmartKeyboardView.kt** — Vista Canvas con renderizado de teclas, trail bezier, candidate strip
 3. **KeyboardData.kt** — Layout QWERTY + números + teclas especiales
-4. **GestureRecognizer.kt** — Swipe/glide typing con interpolación y scoring
+4. **GestureRecognizer.kt** — DTW gesture + path matching con key centers cache
 
 ### Registro como IME del Sistema
 - ✅ Service declarado en AndroidManifest con `BIND_INPUT_METHOD`
@@ -260,20 +279,46 @@ SmartIME: onBindInput called
 SmartIME: onStartInput called
 ```
 
+### Tests Unitarios — 137 tests, 0 fallos
+
+| Archivo | Tests | v1.2 | v1.6 |
+|---------|-------|------|------|
+| `engine/FuzzyScorerTest.kt` | 40 | 40 | 40 |
+| `engine/PredictorEngineTest.kt` | 34 | 34 | 34 |
+| `ime/GestureRecognizerTest.kt` | 14 | 14 | 14 |
+| `ime/KeyboardDataTest.kt` | 19 | 19 | 19 |
+| **Total** | **107** | **107** | **137** |
+
 ---
 
-## 📝 Fase 11 — Entrega Final (Pendiente)
+## 📝 Fase 11 — Entrega Final
 
 ### Checklist de Entregables
 - [x] Código fuente (GitHub)
-- [x] APK funcional (~8 MB)
+- [x] APK funcional (~7.9 MB)
 - [x] Documentación completa (README, ARCHITECTURE, PLAN, justificaciones)
-- [x] 107 tests unitarios — 0 fallos
-- [x] Glide typing verificado en emulador
-- [x] Long-press + autocorrección implementados
+- [x] 137 tests unitarios — 0 fallos
+- [x] Glide typing con DTW verificado
+- [x] Autocorrección gesture-aware (QWERTY adyacente)
+- [x] Long-press + layout inglés estándar
+- [x] GitHub Pages landing page
 - [ ] Informe técnico (PDF, formato IEEE/ACM)
 - [ ] Video demo (5-10 min)
 - [ ] Presentación final
+
+---
+
+## 🚀 Versiones
+
+| Versión | Fecha | Novedades |
+|---------|-------|-----------|
+| **v1.0** | Mayo 2026 | Prototipo Python/Chaquopy, predictor básico |
+| **v1.1** | Mayo 2026 | Migración a Kotlin nativo, FuzzyScorer |
+| **v1.2** | Mayo 2026 | Canvas IME, swipe typing, 107 tests |
+| **v1.3** | Mayo 2026 | Long-press acentos, haptic feedback, animaciones |
+| **v1.4** | Mayo 2026 | Popup preview, autocorrection engine |
+| **v1.5** | Mayo 2026 | **DTW gesture typing, English layout fix, bezier trail** |
+| **v1.6** | Mayo 2026 | **Gesture-aware autocorrection, QWERTY adjacency, GH Pages** |
 
 ---
 

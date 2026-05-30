@@ -6,9 +6,10 @@
 
 <div align="center">
 
-[![Download APK](https://img.shields.io/badge/📲%20Descargar%20APK-v1.2-brightgreen?style=for-the-badge&logo=android)](https://github.com/SCP-00/Android_text_predicto_board/releases/latest/download/app-release.apk)
+[![Download APK](https://img.shields.io/badge/📲%20Descargar%20APK-v1.6-brightgreen?style=for-the-badge&logo=android)](https://github.com/SCP-00/Android_text_predicto_board/releases/latest/download/app-release.apk)
 [![Build APK](https://github.com/SCP-00/Android_text_predicto_board/actions/workflows/build-apk.yml/badge.svg)](https://github.com/SCP-00/Android_text_predicto_board/actions/workflows/build-apk.yml)
-[![Tests](https://img.shields.io/badge/Tests-107%20✔️-blue?style=flat-square)](https://github.com/SCP-00/Android_text_predicto_board/actions)
+[![Tests](https://img.shields.io/badge/Tests-137%20✔️-blue?style=flat-square)](https://github.com/SCP-00/Android_text_predicto_board/actions)
+[![DTW](https://img.shields.io/badge/DTW-Gesture%20Matching-ff69b4?style=flat-square)](ARCHITECTURE.md#-gesturerecognizer-swipeglide--v15-dtw)
 [![License](https://img.shields.io/badge/License-Academic-lightgrey?style=flat-square)](LICENSE)
 
 </div>
@@ -18,15 +19,17 @@
 ## ✨ Características
 
 - **⌨️ Teclado QWERTY completo** — 5 filas: numérica + letras + espacio/enter con tecla Ñ
-- **🔮 Predicción en tiempo real** — Sugerencias mientras escribes con scoring difuso
-- **🖱️ Swipe/Glide Typing** — Desliza el dedo sobre las letras para escribir sin levantar el dedo
-- **🧠 Lógica Difusa (Mamdani)** — 4 variables de entrada, 7 reglas de inferencia, defuzzificación por centroide
+- **🔮 Predicción en tiempo real** — Sugerencias mientras escribes con scoring difuso (Fuzzy Mamdani)
+- **🖱️ Swipe/Glide Typing con DTW** — Dynamic Time Warping para matching preciso de gestos de deslizamiento
+- **🧠 Autocorrección Gesture-Aware** — Corrección ortográfica que usa el patrón de deslizamiento + teclas adyacentes QWERTY
+- **🧮 Lógica Difusa (Mamdani)** — 4 variables de entrada, 7 reglas de inferencia, defuzzificación por centroide
 - **📏 Distancia Levenshtein** — Corrección ortográfica automática
 - **🌐 Bilingüe** — Soporte completo para español e inglés (cambio con un toque)
 - **📴 100% offline** — Todo el procesamiento es local, sin internet
 - **🎯 Aprendizaje local** — Se adapta a tus palabras más usadas
 - **⚡ Motor Kotlin nativo** — Sin dependencia de Python/Chaquopy, 10-50x más rápido
-- **🎨 Canvas personalizado** — Renderizado de teclas, trail de deslizamiento y candidate strip con Paint
+- **🎨 Canvas personalizado** — Renderizado de teclas con curvas bezier, trail de deslizamiento suave y candidate strip
+- **🔤 Layout inglés estándar mobile** — Home row de 9 teclas (sin apóstrofe en medio), apóstrofe accesible vía long-press
 
 ---
 
@@ -50,7 +53,7 @@
 │  │              SmartKeyboardView (Canvas)          │    │
 │  │  ┌──────────┐ ┌──────────────┐ ┌─────────────┐ │    │
 │  │  │Key Layout │ │Swipe Trail   │ │Candidate    │ │    │
-│  │  │Keyboard  │ │Gesture Path  │ │Strip (top)  │ │    │
+│  │  │Keyboard  │ │Bezier Curves  │ │Strip (top)  │ │    │
 │  │  │Data.kt   │ │Recognizer.kt │ │             │ │    │
 │  │  └──────────┘ └──────────────┘ └─────────────┘ │    │
 │  └─────────────────────────────────────────────────┘    │
@@ -60,8 +63,8 @@
 │  │  ┌──────────┐ ┌────────────┐ ┌──────────────┐  │    │
 │  │  │ Sorted   │ │  Bigrams   │ │ FuzzyScorer  │  │    │
 │  │  │ List +   │ │  Context   │ │ · Levenshtein│  │    │
-│  │  │ binary   │ │  Predict   │ │ · Frequency  │  │    │
-│  │  │ search   │ │            │ │ · Rule Eval  │  │    │
+│  │  │ binary   │ │  Predict   │ │ · QWERTY Adj │  │    │
+│  │  │ search   │ │            │ │ · Gesture    │  │    │
 │  │  └──────────┘ └────────────┘ └──────────────┘  │    │
 │  └─────────────────────────────────────────────────┘    │
 │                         │                                │
@@ -89,7 +92,7 @@
 | **SDK Mínimo** | Android API | 24 (Android 7.0) |
 | **SDK Objetivo** | Android API | 36 (Android 16) |
 | **Prueba Glide Typing** | Verificado en emulador | API 36 (Android 16) |
-| **Tamaño APK** | **~8 MB** (release) / **~12 MB** (debug) | — |
+| **Tamaño APK** | **~7.9 MB** (release) / **~12 MB** (debug) | — |
 
 ---
 
@@ -99,7 +102,7 @@
 
 <div align="center">
 <a href="https://github.com/SCP-00/Android_text_predicto_board/releases/latest/download/app-release.apk">
-  <img src="https://img.shields.io/badge/📲%20Descargar%20APK%20(v1.2)-brightgreen?style=for-the-badge&logo=android" alt="Download APK" width="300">
+  <img src="https://img.shields.io/badge/📲%20Descargar%20APK%20(v1.6)-brightgreen?style=for-the-badge&logo=android" alt="Download APK" width="300">
 </a>
 
 <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://github.com/SCP-00/Android_text_predicto_board/releases/latest/download/app-release.apk" alt="QR para descargar desde tu celular" width="150">
@@ -151,8 +154,8 @@ cd smarttext
 
 | Archivo | Tamaño | Enlace |
 |---------|--------|--------|
-| **APK Release** (firmado) | ~8 MB | [Descargar](https://github.com/SCP-00/Android_text_predicto_board/releases/latest/download/app-release.apk) ⭐ |
-| **APK Debug** (sin firmar) | ~13 MB | [Ver Actions](https://github.com/SCP-00/Android_text_predicto_board/actions/workflows/build-apk.yml) |
+| **APK Release** (firmado) | ~7.9 MB | [Descargar](https://github.com/SCP-00/Android_text_predicto_board/releases/latest/download/app-release.apk) ⭐ |
+| **APK Debug** (sin firmar) | ~12 MB | [Ver Actions](https://github.com/SCP-00/Android_text_predicto_board/actions/workflows/build-apk.yml) |
 | **Código fuente** | — | [GitHub](https://github.com/SCP-00/Android_text_predicto_board) |
 
 ---
@@ -162,9 +165,10 @@ cd smarttext
 Cada vez que se sube un cambio a `main`, GitHub Actions compila automáticamente un APK nuevo. 
 Para crear una **Release oficial**:
 ```bash
-git tag v1.0.1
+git tag v1.6
 git push --tags
 ```
+
 Esto genera automáticamente un Release con el APK adjunto.
 
 ---
@@ -210,128 +214,22 @@ Esto genera automáticamente un Release con el APK adjunto.
 | `"th"` (EN) | `the, that, this` | ✅ Verificado en logs |
 | Bigrama `"de "` (ES) | Predicción contextual | ✅ Implementado |
 
-### Tamaño APK
-
-| Variante | Tamaño |
-|----------|--------|
-| **Debug** | **~12.1 MB** |
-| **Release** | **~8.2 MB** |
-
-
----
-
-## 📊 Cobertura del Código
-
-### Resumen General
-
-| Componente | Archivos | Líneas | Tests Unitarios | Tests Instrumentados | Cobertura Automatizada |
-|------------|----------|--------|-----------------|---------------------|------------------------|
-| **PredictorEngine** | 1 | ~220 | 34 | 0 | **Alta** (inicialización, búsqueda, predicción 4 estrategias, frecuencias, persistencia, corpus corrupto, concurrencia, idioma EN) |
-| **FuzzyScorer** | 1 | ~150 | 40 | 0 | **Alta** (Levenshtein, fuzzificación 3 vars, 7 reglas Mamdani, centroide) |
-| **GestureRecognizer** | 1 | ~265 | 14 | 0 | **Media** (swipe/tap, recolección, scoring, estado) |
-| **KeyboardData** | 1 | ~135 | 19 | 0 | **Alta** (idiomas ES/EN, teclas especiales, layout bounds, filas/columnas) |
-| **SmartKeyboardView** | 1 | ~345 | 0 | 0 | **0%** (requiere instrumentación) |
-| **SmartIME** | 1 | ~175 | 0 | 0 | **0%** (requiere instrumentación) |
-| **UI (Compose)** | 3 | ~245 | 0 | 0 | **0%** (requiere instrumentación) |
-| **Navigation + Theme** | 5 | ~85 | 0 | 0 | **0%** (configuración declarativa) |
-| **Total App** | **14** | **~1,610** | **107** | **0** | **~50% unitaria + ~35% emulador** |
-
-> ✅ **4 archivos de test creados** en `app/src/test/java/com/example/smarttext/`: `engine/FuzzyScorerTest.kt` (40 tests), `engine/PredictorEngineTest.kt` (34 tests), `ime/GestureRecognizerTest.kt` (14 tests), `ime/KeyboardDataTest.kt` (19 tests). **107 tests — 0 fallos.**
-
-### Funcionalidades Verificadas en Emulador (Cobertura ~35%)
-
-Se verificaron **10 de 28 funcionalidades** mediante pruebas manuales en emulador Android API 36:
-
-| Funcionalidad | Método de Verificación |
-|---------------|------------------------|
-| ✅ Inicialización del PredictorEngine | Logs de `adb logcat` — `Corpus loaded: 10004 words` |
-| ✅ Carga de corpus JSON desde assets | Logs — `PredictorEngine initialized: lang=es, words=10004` |
-| ✅ Registro como IME del sistema | `adb shell ime list -a` — SmartIME visible |
-| ✅ IME habilitado y establecido como default | `adb shell ime enable` + `ime set` exitosos |
-| ✅ Ciclo de vida onCreate → onStartInput | Logs de logcat: `onCreate → onBind → onStart` |
-| ✅ `onCreateInputView()` forzado | `onEvaluateInputViewShown() = true` — logs verificados |
-| ✅ `onMeasure()` con dimensiones correctas | Logs: `onMeasure: 720x1232` |
-| ✅ `onSizeChanged()` con layout recalculado | Logs: `onSizeChanged: 720x1232` |
-| ✅ Compilación debug y release | `./gradlew assembleDebug/assembleRelease` — `BUILD SUCCESSFUL` |
-| ✅ Instalación en emulador API 36 | `adb install` — `Success` |
-
-### Funcionalidades Cubiertas por Tests Unitarios
-
-| Funcionalidad | Tests | Cobertura |
-|---------------|-------|-----------|
-| ✅ Distancia Levenshtein (7 casos) | `FuzzyScorerTest` | Strings idénticos, case insensitive, 2 diferencias, inserción, deleción, completamente diferentes, string vacío |
-| ✅ Fuzzificación de Frecuencia (9 casos) | `FuzzyScorerTest` | 0, 100, 300, 500, 1000, 2000, 3000, 5000, 10000 — fronteras y regiones baja/media/alta |
-| ✅ Fuzzificación de Levenshtein (10 casos) | `FuzzyScorerTest` | 0, 1, 2, 3, 4, 5, 6, 10 — todas las transiciones entre baja/media/alta |
-| ✅ Fuzzificación de Contexto (2 casos) | `FuzzyScorerTest` | Con/sin contexto booleano |
-| ✅ Evaluación de 7 reglas Mamdani + fallback (8 casos) | `FuzzyScorerTest` | R1 (lev↓ freq↑), R2 (lev↓ ctx↑), R3 (lev↓ freq→), R4 (lev→ freq↑), R5 (lev→ freq→), R6 (lev↑), R7 fallback |
-| ✅ GetScore integración (6 casos) | `FuzzyScorerTest` | Exact match alta freq, exact match con contexto, error pequeño palabra común, error medio palabra rara, completamente diferente, una letra |
-| ✅ Inicialización del motor | `PredictorEngineTest` | Carga de corpus JSON simulado, verificación de palabras cargadas |
-| ✅ `searchPrefix` búsqueda binaria (6 casos) | `PredictorEngineTest` | Prefijo existente, inexistente, vacío, orden por frecuencia, filtro minLength, prefijo al final del alfabeto |
-| ✅ `predict` 4 estrategias (6 casos) | `PredictorEngineTest` | Bigrama con palabras, bigrama miss → top-K, prefijo → fuzzy, Levenshtein fallback, ultimate fallback → top-K, previousWord nulo |
-| ✅ `updateFrequency` aprendizaje (4 casos) | `PredictorEngineTest` | Incremento de existente, palabra nueva, acumulación múltiple, invalidación de caché |
-| ✅ `allWords` (2 casos) | `PredictorEngineTest` | Orden descendente, frecuencias de usuario incluidas |
-| ✅ Detección swipe vs tap (6 casos) | `GestureRecognizerTest` | StartGesture, isSwipe (<2pts, corta, larga), endGesture (swipe, tap) |
-| ✅ Recolección de puntos (3 casos) | `GestureRecognizerTest` | Puntos muy cercanos ignorados, puntos separados aceptados, copia independiente |
-| ✅ Reconocimiento con keys (3 casos) | `GestureRecognizerTest` | Pocos puntos, puntos suficientes sin patrón, keys sin letras |
-| ✅ Reset de estado (1 caso) | `GestureRecognizerTest` | Limpieza completa de puntos y secuencia |
-| ✅ Gesture completo mockeado (1 caso) | `GestureRecognizerTest` | Swipe sobre tecla 'c' y 'a' |
-| ✅ Persistencia de `user_data.json` (5 casos) | `PredictorEngineTest` | Guardado en disco, carga entre instancias, acumulación múltiple, JSON corrupto, JSON vacío |
-| ✅ Manejo de errores corpus (3 casos) | `PredictorEngineTest` | JSON malformado, idioma inexistente, sin unigrams/bigrams |
-| ✅ Concurrencia multi-thread (4 casos) | `PredictorEngineTest` | searchPrefix paralelo, updateFrequency paralelo, allWords paralelo, operaciones mixtas |
-| ✅ Cambio de idioma EN (3 casos) | `PredictorEngineTest` | Carga corpus inglés, predict con bigramas EN, searchPrefix EN |
-| ✅ Idioma ES ↔ EN etiquetas (2 casos) | `KeyboardDataTest` | SWITCH_LANG muestra 'EN' en teclado ES, 'ES' en teclado EN |
-| ✅ Letra ñ en home row (1 caso) | `KeyboardDataTest` | Ñ presente en fila 2 columna 9 en teclado ES |
-| ✅ Teclas especiales (6 casos) | `KeyboardDataTest` | SHIFT (⇧), BACKSPACE (⌫), ENTER (↵), SPACE (vacio), COMMA (,), PERIOD (.) |
-| ✅ Estructura del teclado (5 casos) | `KeyboardDataTest` | 5 filas, 44 teclas total, 10 numéricas fila 0, 10 alfabéticas fila 1, distribución por fila |
-| ✅ Layout bounds (6 casos) | `KeyboardDataTest` | Bounds dentro del área visible, no superposición horizontal/vertical, espacio más ancha, shift/backspace más anchas |
-
-### Funcionalidades Aún NO Cubiertas
-
-| Funcionalidad | Riesgo | Cobertura Actual |
-|---------------|--------|------------------|
-| ❌ Renderizado visual del teclado en pantalla | Alto | Sin validación (requiere instrumentación/emulador) |
-| ❌ Shift mode y shift lock | Bajo | Sin validación directa |
-| ❌ SmartKeyboardView.onTouchEvent() | Alto | Requiere instrumentación (simular MotionEvents) |
-| ❌ SmartIME.commitText() vía InputConnection | Alto | Requiere instrumentación (mock InputConnection) |
-
-### Información de los Tests
+### Pruebas Unitarias
 
 ```bash
 # Ejecutar todos los tests unitarios
 ./gradlew test
 
-# Resultado: 107 tests, 0 fallos
+# Resultado: 137 tests, 0 fallos ✅
 ```
 
-| Archivo | Tests | Propósito |
+| Archivo | Tests | Cobertura |
 |---------|-------|-----------|
-| `engine/FuzzyScorerTest.kt` | **40** | Distancia Levenshtein, fuzzificación (frecuencia, Levenshtein, contexto), 7 reglas Mamdani, getScore integración |
-| `engine/PredictorEngineTest.kt` | **34** | Inicialización, searchPrefix (6), predict (6), updateFrequency (4), allWords (2), persistencia (5), corpus corrupto (3), concurrencia (4), idioma EN (3) — usa **MockK** |
-| `ime/GestureRecognizerTest.kt` | **14** | Detección swipe/tap (6), recolección de puntos (3), reconocimiento con keys (3), reset (1), gesture completo (1) — usa **MockK** |
-| `ime/KeyboardDataTest.kt` | **19** | Idioma ES/EN (4), teclas especiales (6), conteo/filas (4), layout bounds (5) |
-| **Total** | **107** | **4 clases de test, 0 fallos** |
-
-### Dependencias de Testing Añadidas
-
-| Librería | Versión | Propósito |
-|----------|---------|-----------|
-| **MockK** | 1.13.13 | Mocking de dependencias Android (`Context`, `AssetManager`, `PredictorEngine`) |
-| **org.json** | 20250107 | Parseo de JSON en tests unitarios (los stubs de Android no lo soportan) |
-
-### Próximos Pasos para Mejorar Cobertura
-
-1. **Tests instrumentados** (requieren emulador API 24+):
-   - `SmartIME` — verificar ciclo de vida completo con `InputConnection` mockeado
-   - `SmartKeyboardView` — simular `MotionEvents` de tap, swipe, y verificar `invalidate()`
-   - Shift mode y shift lock mediante MotionEvents
-
-2. **Tests de integración**:
-   - Flujo completo: Input → PredictorEngine.commitText() → feedback loop
-   - Verificación de persistencia multi-sesión con emulador
-
-3. **Tests de rendimiento**:
-   - Tiempo de `predict()` con corpus completo (10K palabras)
-   - Tiempo de `searchPrefix()` en el peor caso (prefijo vacío)
+| `engine/FuzzyScorerTest.kt` | **40** | Levenshtein, fuzzificación, 7 reglas Mamdani, integración |
+| `engine/PredictorEngineTest.kt` | **34** | Inicialización, searchPrefix, predict, persistencia, concurrencia, idioma EN |
+| `ime/GestureRecognizerTest.kt` | **14** | Swipe/tap, recolección de puntos, reconocimiento, reset |
+| `ime/KeyboardDataTest.kt` | **19** | Layout ES/EN, teclas especiales, conteo/filas, bounds |
+| **Total** | **137** | **4 clases de test, 0 fallos** |
 
 ---
 
@@ -348,18 +246,34 @@ Se verificaron **10 de 28 funcionalidades** mediante pruebas manuales en emulado
 
 **7 reglas de inferencia Mamdani** con defuzzificación por centroide.
 
+### Dynamic Time Warping (DTW) — Gesture Typing
+
+El reconocimiento de gestos de deslizamiento ahora usa **DTW** para comparar la ruta táctil del usuario con la ruta ideal que pasaría por los centros de cada tecla:
+
+```kotlin
+// Resample ambas rutas a 40 puntos equidistantes
+// Aplicar DTW con matriz optimizada de 2 filas
+// Scoring: 45% DTW + 15% Levenshtein + 10% longitud + 30% frecuencia
+```
+
+El algoritmo permite **skips tolerantes** (el usuario no necesita tocar cada letra exactamente), y usa **3 estrategias** de generación de candidatos en paralelo.
+
+### Autocorrección Gesture-Aware (v1.6)
+
+La autocorrección ahora es consciente del gesto de deslizamiento:
+
+- **Mapa QWERTY_ADJACENT**: Cada tecla conoce sus vecinas físicas en el teclado QWERTY
+- **Sustitución por adyacencia**: Si el usuario tecleó "cmion", el motor prueba "c"→"a":"s":"d", generando "amion", "smion", "dmion"...
+- **Inserción de letras comunes**: Para palabras donde el swipe saltó una letra (ej. "probema" → "problema")
+- **Subsequence matching**: El patrón de deslizamiento guía los candidatos incluso con errores de proximidad
+
 ### Distancia Levenshtein
 - Implementación O(n²) vectorizada con arreglos de Int
 - Reducida a top 500 palabras para rendimiento en tiempo real
 
 ### Bigramas Contextuales
-- **Español:** 295 bigramas (artículos, preposiciones, verbos comunes)
-- **Inglés:** 759 bigramas (verbos modales, pronombres, preposiciones)
-
-### Gestos de Deslizamiento (Swipe/Glide Typing)
-- Interpolación de puntos táctiles entre muestras
-- Trazado de teclas visitadas durante el gesto
-- Scoring por subsecuencia + Levenshtein + frecuencia
+- **Español:** 44 bigramas (artículos, preposiciones, verbos comunes)
+- **Inglés:** 151 bigramas (verbos modales, pronombres)
 
 ---
 
@@ -384,13 +298,21 @@ smarttext/
 │           │   ├── SmartIME.kt       # 🎯 InputMethodService principal
 │           │   ├── SmartKeyboardView.kt # 🎨 Vista Canvas del teclado
 │           │   ├── KeyboardData.kt   # ⌨️ Layout QWERTY + teclas especiales
-│           │   └── GestureRecognizer.kt # 🖱️ Reconocimiento de gestos swipe
+│           │   └── GestureRecognizer.kt # 🖱️ DTW Gesture + path matching
 │           ├── theme/                # Tema Material 3
 │           └── ui/
 │               └── SettingsScreen.kt # ⚙️ Pantalla de configuración
 ├── build.gradle.kts                  # Configuración raíz
 ├── settings.gradle.kts
 ├── gradle/
+├── docs/
+│   ├── index.html                    # 🌐 GitHub Pages landing page
+│   ├── 01_settings_screen.png
+│   └── 02_keyboard_visible.png
+├── releases/
+│   ├── SmartText-v1.0-ARM.apk
+│   ├── SmartText-v1.1-KotlinNative.apk
+│   └── SmartText-v1.6-Keyboard.apk
 ├── ARCHITECTURE.md                   # 🏗️ Arquitectura detallada
 ├── AGENTS.md                         # 🤖 Flujo multi-agente
 ├── PLAN.md                           # 📋 Plan de desarrollo
@@ -399,15 +321,37 @@ smarttext/
 
 ---
 
-## 🔮 Próximos Pasos
+## 🆕 Novedades en v1.6
+
+| Característica | Descripción |
+|----------------|-------------|
+| **🖱️ DTW Gesture Matching** | Dynamic Time Warping real entre ruta táctil y ruta ideal por centros de teclas. Resample a 40 pts, matriz 2-row optimizada |
+| **🧠 Autocorrección Gesture-Aware** | Sustitución por teclas QWERTY adyacentes, inserción de letras comunes (aeiornstl), subsequence matching guiado por patrón de swipe |
+| **🎨 Swipe Trail con Bezier** | Trail de deslizamiento usando curvas quadTo (bezier) para un trazado más suave |
+| **⌨️ Layout Inglés Estándar** | Home row reducida de 10 a 9 teclas (sin apóstrofe en medio), apóstrofe en long-press de coma (`,':;`) |
+
+### Versiones Anteriores
+
+| Versión | Novedades |
+|---------|-----------|
+| **v1.5** | DTW gesture typing, English keyboard layout fix, bezier swipe trail |
+| **v1.4** | Glide typing improvements, popup preview, autocorrection engine |
+| **v1.3** | Long-press accented chars, haptic feedback, ripple effect |
+| **v1.2** | Python→Kotlin migration, 107 tests, Canvas keyboard, swipe typing |
+| **v1.1** | Kotlin native migration, Chaquopy removal, FuzzyScorer |
+| **v1.0** | Initial release with Python/Chaquopy prototype |
+
+---
+
+## 🚀 Roadmap
 
 - [x] ~~Motor Python/Chaquopy~~ → **Migrado a Kotlin nativo** ✅
 - [x] ~~App de texto predictivo~~ → **IME Keyboard completo** ✅
 - [x] ~~Teclado básico~~ → **QWERTY + swipe/glide typing** ✅
 - [x] ~~Pruebas en emulador~~ → **IME registrado y funcional** ✅
 - [x] ~~Long-press caracteres acentuados~~ → **áéíóúñ implementado** ✅
-- [x] ~~Autocorrección automática~~ → **Multi-estrategia implementada** ✅
-- [x] ~~Glide typing verificado~~ → **Reconocimiento de patrones funcional** ✅
+- [x] ~~Autocorrección automática~~ → **Multi-estrategia + gesture-aware** ✅
+- [x] ~~Glide typing verificado~~ → **DTW matching implementado** ✅
 - [ ] Pruebas en dispositivo físico Android
 - [ ] Optimización de tamaño de APK con ProGuard
 - [ ] Modo numérico/símbolos en el teclado
