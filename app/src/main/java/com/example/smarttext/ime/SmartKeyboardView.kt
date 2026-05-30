@@ -635,8 +635,8 @@ class SmartKeyboardView(
                     isLongPressPopupVisible = false
                     longPressKey = null
                 } else if (isGesturing) {
-                    // Finish gesture — commit the recognized word (if any)
-                    gestureRecognizer.addPoint(x, y)
+                    // Finish gesture — force-add the final lift point & recognize
+                    gestureRecognizer.forceAddPoint(x, y)
                     val p = predictor
                     if (p != null) {
                         val recognized = gestureRecognizer.recognize(keys, p, 5, previousWord)

@@ -180,12 +180,19 @@ class SmartIME : InputMethodService() {
                 if (correction != null && correction != typedWord) {
                     Log.d(TAG, "Autocorrect: '$typedWord' -> '$correction'")
 
+                    // Use a single batch edit so correction + space is atomic
+                    ic.beginBatchEdit()
+
                     // Replace the typed word with the correction
                     ic.deleteSurroundingText(currentInputWord.length, 0)
                     // Commit correction preserving the user's original casing intent
                     val originalFirstCased = if (currentInputWord.first().isUpperCase())
                         correction.replaceFirstChar { it.uppercase() } else correction
                     ic.commitText(originalFirstCased, 1)
+                    // Commit space in the same batch
+                    ic.commitText(" ", 1)
+
+                    ic.endBatchEdit()
 
                     // Track the corrected word
                     currentInputWord = correction
@@ -197,8 +204,6 @@ class SmartIME : InputMethodService() {
                     }
 
                     keyboardView?.updatePredictions("", correction)
-                    // Now commit the space after the correction
-                    ic.commitText(" ", 1)
                     currentInputWord = ""
                     return
                 }

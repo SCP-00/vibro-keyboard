@@ -53,10 +53,12 @@ class KeyboardDataTest {
     }
 
     @Test
-    fun `generate - ingles tiene home row de 9 teclas (sin ñ)`() {
+    fun `generate - ingles tiene home row de 10 teclas (sin ñ, con apostrofe)`() {
         val keys = KeyboardData.generate("en")
         val homeRowKeys = keys.filter { it.row == 1 }
-        assertEquals("English home row should have 9 keys (no ñ)", 9, homeRowKeys.size)
+        assertEquals("English home row should have 10 keys (no ñ, with apostrophe)", 10, homeRowKeys.size)
+        assertTrue("English home row should include apostrophe", homeRowKeys.any { it.label == "'" })
+        assertEquals("Apostrophe should be last in home row", 9, homeRowKeys.first { it.label == "'" }.col)
     }
 
     @Test
@@ -153,9 +155,9 @@ class KeyboardDataTest {
     }
 
     @Test
-    fun `generate - ingles tiene 33 teclas (10+9+9+5)`() {
+    fun `generate - ingles tiene 34 teclas (10+10+9+5)`() {
         val keys = KeyboardData.generate("en")
-        assertEquals("English should have 33 keys (10+9+9+5)", 33, keys.size)
+        assertEquals("English should have 34 keys (10+10+9+5, with apostrophe)", 34, keys.size)
     }
 
     @Test
@@ -171,7 +173,7 @@ class KeyboardDataTest {
         assertEquals("Spanish Row 2 (bottom)", 9, esRowCounts[2]!!)
         assertEquals("Spanish Row 3 (space)", 5, esRowCounts[3]!!)
         assertEquals("English Row 0", 10, enRowCounts[0]!!)
-        assertEquals("English Row 1 (home)", 9, enRowCounts[1]!!)
+        assertEquals("English Row 1 (home, with apostrophe)", 10, enRowCounts[1]!!)
         assertEquals("English Row 2 (bottom)", 9, enRowCounts[2]!!)
         assertEquals("English Row 3 (space)", 5, enRowCounts[3]!!)
     }
@@ -325,9 +327,9 @@ class KeyboardDataTest {
     @Test
     fun `layoutKeys - layout en ingles no lanza excepcion`() {
         val keys = KeyboardData.generate("en")
-        // No debe lanzar excepción al hacer layout con 33 teclas (row 1 con 9 teclas)
+        // No debe lanzar excepción al hacer layout con 34 teclas (row 1 con 10 teclas, con apostrofe)
         val laidOut = KeyboardData.layoutKeys(keys, 720f, 400f)
-        assertEquals("English layout should have 33 keys", 33, laidOut.size)
+        assertEquals("English layout should have 34 keys", 34, laidOut.size)
     }
 
 }

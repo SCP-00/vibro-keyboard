@@ -27,7 +27,7 @@ class GestureRecognizer {
         /** Interpolation step in pixels between touch samples. */
         private const val INTERPOLATION_STEP = 8f
         /** Minimum points to consider a valid gesture. */
-        private const val MIN_GESTURE_POINTS = 4
+        private const val MIN_GESTURE_POINTS = 3
         /** Max length for gesture-matched words (avoid unreasonably long matches). */
         private const val MAX_GESTURE_WORD_LENGTH = 15
     }
@@ -50,13 +50,23 @@ class GestureRecognizer {
         lastKeySequence = emptyList()
     }
 
-    /** Add a point during the gesture. */
+    /** Add a point during the gesture. Skips duplicates (same pixel). */
     fun addPoint(x: Float, y: Float) {
+        if (touchPoints.isEmpty()) {
+            touchPoints.add(createPoint(x, y))
+            return
+        }
         val last = touchPoints.last()
-        // Skip if the point is too close to the last one
         val dx = x - last.x
         val dy = y - last.y
-        if (dx * dx + dy * dy < 25f) return
+        if (dx * dx + dy * dy < 4f) return  // Only skip if truly same pixel
+        touchPoints.add(createPoint(x, y))
+    }
+
+    /** Force-add a point (used for ACTION_UP), bypassing the distance filter.
+     *  Skips if it's the exact same pixel as the last point. */
+    fun forceAddPoint(x: Float, y: Float) {
+        if (touchPoints.isNotEmpty() && touchPoints.last().x == x && touchPoints.last().y == y) return
         touchPoints.add(createPoint(x, y))
     }
 

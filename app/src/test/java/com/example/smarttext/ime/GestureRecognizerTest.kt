@@ -131,16 +131,16 @@ class GestureRecognizerTest {
     }
 
     @Test
-    fun `addPoint - ignora puntos muy cercanos`() {
+    fun `addPoint - ignora puntos en el mismo pixel`() {
         recognizer.startGesture(100f, 100f)
-        recognizer.addPoint(102f, 101f)  // dx²+dy² = 4+1 = 5 < 25
-        assertEquals("Should still have 1 point (2nd was too close)", 1, recognizer.getTouchPoints().size)
+        recognizer.addPoint(100f, 100f)  // dx²+dy² = 0 < 4
+        assertEquals("Should still have 1 point (2nd was same pixel)", 1, recognizer.getTouchPoints().size)
     }
 
     @Test
     fun `addPoint - acepta puntos suficientemente separados`() {
         recognizer.startGesture(100f, 100f)
-        recognizer.addPoint(110f, 110f)  // dx²+dy² = 100+100 = 200 > 25
+        recognizer.addPoint(103f, 101f)  // dx²+dy² = 9+1 = 10 >= 4
         assertEquals("Should have 2 points", 2, recognizer.getTouchPoints().size)
     }
 

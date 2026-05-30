@@ -149,7 +149,9 @@ object KeyboardData {
         Key(c('ñ'), "ñ", 1, 9, longPressChars = null)
     )
 
-    /** English home row — no Ñ, has apostrophe instead. */
+    /** English home row — 10 keys including apostrophe after L.
+     *  Standard EN QWERTY: a s d f g h j k l '
+     */
     private val homeRowEnglish = listOf(
         Key(c('a'), "a", 1, 0, longPressChars = SPECIAL_CHARS['a']),
         Key(c('s'), "s", 1, 1, longPressChars = SPECIAL_CHARS['s']),
@@ -159,7 +161,8 @@ object KeyboardData {
         Key(c('h'), "h", 1, 5, longPressChars = null),
         Key(c('j'), "j", 1, 6, longPressChars = null),
         Key(c('k'), "k", 1, 7, longPressChars = null),
-        Key(c('l'), "l", 1, 8, longPressChars = null)
+        Key(c('l'), "l", 1, 8, longPressChars = null),
+        Key(c('\''), "'", 1, 9, longPressChars = "'\"`")
     )
 
     /** Bottom row: row 2 — same for all languages. */
