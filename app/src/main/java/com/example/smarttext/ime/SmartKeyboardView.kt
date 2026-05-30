@@ -757,7 +757,10 @@ class SmartKeyboardView(
                     if (p != null) {
                         val recognized = gestureRecognizer.recognize(keys, p, 5, previousWord)
                         if (recognized.isNotEmpty()) {
-                            ime.commitWord(recognized.first().word)
+                            val best = recognized.first()
+                            // Pass gesture pattern and DTW score for gesture-aware autocorrection
+                            val gesturePattern = gestureRecognizer.getLastKeySequence().joinToString("")
+                            ime.commitWord(best.word, gesturePattern, best.score)
                         }
                     }
                     gestureRecognizer.reset()

@@ -42,6 +42,10 @@ class SmartIME : InputMethodService() {
     private var currentInputWord: String = ""
     private var previousWord: String? = null  // For bigram context & autocorrect
 
+    // Gesture info for gesture-aware autocorrection
+    private var lastGesturePattern: String? = null
+    private var lastGestureDtwScore: Float? = null
+
     // ─── Lifecycle ───
 
     override fun onCreate() {
@@ -142,6 +146,11 @@ class SmartIME : InputMethodService() {
 
         if (text.length == 1 && text[0].isLetter()) {
             // ── Letter — build current word ──
+            // Clear gesture info since user is now typing manually
+            if (currentInputWord.isEmpty()) {
+                lastGesturePattern = null
+                lastGestureDtwScore = null
+            }
             currentInputWord += text
             keyboardView?.updatePredictions(currentInputWord, previousWord)
             ic.commitText(text, 1)
@@ -235,23 +244,29 @@ class SmartIME : InputMethodService() {
         var correction: String? = null
 
         if (p != null) {
-            val cand = p.autocorrect(typedWord)
+            // Use gesture-aware autocorrect if gesture info is available
+            val cand = if (lastGesturePattern != null) {
+                p.autocorrect(typedWord, lastGesturePattern, lastGestureDtwScore)
+            } else {
+                p.autocorrect(typedWord)
+            }
             if (cand != null && cand != typedWord) {
                 correction = cand
                 Log.d(TAG, "Autocorrect: '$typedWord' -> '$cand'")
-                // Update frequency for the CORRECTED word
                 scope.launch {
                     p.updateFrequency(cand)
                 }
             } else {
-                // Word is known (or no good correction) — update frequency for original
                 scope.launch {
                     p.updateFrequency(typedWord)
                 }
             }
         }
 
-        // Update context for next-word predictions
+        // Clear gesture info after autocorrection
+        lastGesturePattern = null
+        lastGestureDtwScore = null
+
         previousWord = correction ?: typedWord
         currentInputWord = ""
         keyboardView?.updatePredictions("", previousWord)
@@ -262,9 +277,23 @@ class SmartIME : InputMethodService() {
     /**
      * Commit a full word (from predictions or swipe).
      * Replaces the current composing text.
+     *
+     * @param word The word to commit.
+     * @param gesturePattern Optional key sequence from gesture typing.
+     * @param gestureDtwScore Optional DTW spatial score from gesture recognizer.
      */
-    fun commitWord(word: String) {
+    fun commitWord(word: String, gesturePattern: String? = null, gestureDtwScore: Float? = null) {
         val ic = currentInputConnection ?: return
+
+        // Store gesture info for potential autocorrection of subsequent words
+        if (gesturePattern != null) {
+            lastGesturePattern = gesturePattern
+            lastGestureDtwScore = gestureDtwScore
+            Log.d(TAG, "Gesture word stored: '$word' pattern='$gesturePattern' dtwScore=$gestureDtwScore")
+        } else {
+            lastGesturePattern = null
+            lastGestureDtwScore = null
+        }
 
         // Delete the current partial input
         if (currentInputWord.isNotEmpty()) {
@@ -304,6 +333,8 @@ class SmartIME : InputMethodService() {
         ic.commitText("\n", 1)
         currentInputWord = ""
         previousWord = null
+        lastGesturePattern = null
+        lastGestureDtwScore = null
         keyboardView?.updatePredictions("")
     }
 
