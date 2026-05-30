@@ -27,25 +27,24 @@
 
 | Componente | Archivos | Líneas de Código | Tests Unitarios | Tests Instrumentados | Cobertura |
 |------------|----------|-----------------|-----------------|---------------------|-----------|
-| **PredictorEngine** | 1 | ~220 | 0 | 0 | **0%** |
-| **FuzzyScorer** | 1 | ~150 | 0 | 0 | **0%** |
-| **GestureRecognizer** | 1 | ~265 | 0 | 0 | **0%** |
-| **KeyboardData** | 1 | ~125 | 0 | 0 | **0%** |
+| **PredictorEngine** | 1 | ~220 | 34 | 0 | **Alta** (inicialización, búsqueda, predicción 4 estrategias, frecuencias, persistencia, corpus corrupto, concurrencia, idioma EN) |
+| **FuzzyScorer** | 1 | ~150 | 40 | 0 | **Alta** (Levenshtein, fuzzificación 3 vars, 7 reglas Mamdani, centroide) |
+| **GestureRecognizer** | 1 | ~265 | 14 | 0 | **Media** (swipe/tap, recolección, scoring, estado) |
+| **KeyboardData** | 1 | ~135 | 19 | 0 | **Alta** (idiomas ES/EN, teclas especiales, layout bounds, filas/columnas) |
 | **SmartKeyboardView** | 1 | ~345 | 0 | 0 | **0%** |
 | **SmartIME** | 1 | ~175 | 0 | 0 | **0%** |
-| **UI (Compose)** | 4 | ~120 | 0 | 0 | **0%** |
-| **Theme** | 3 | ~60 | 0 | 0 | **0%** |
-| **Navigation** | 2 | ~25 | 0 | 0 | **0%** |
-| **Config (Gradle, Manifest)** | 5 | ~110 | — | — | — |
-| **Total App** | **19** | **~1,595** | **0** | **0** | **0% (unit) / ~35% (verificado en emulador)** |
+| **UI (Compose)** | 3 | ~245 | 0 | 0 | **0%** (requiere instrumentación) |
+| **Navigation + Theme** | 5 | ~85 | 0 | 0 | **0%** (configuración declarativa) |
+| **Total App** | **14** | **~1,610** | **107** | **0** | **~50% unitaria + ~35% emulador** |
 
 ### 1.2 Estado de los Directorios de Test
 
 | Directorio | Archivos | Estado |
 |------------|----------|--------|
-| `app/src/test/java/` | 0 archivos .kt | ❌ Vacío |
-| `app/src/androidTest/java/` | 0 archivos .kt | ❌ Vacío |
-| `app/src/test/` (recurso) | `ui/main/MainScreenViewModelTest.kt` referenciado | ❌ No existe en disco |
+| `app/src/test/java/com/example/smarttext/engine/` | `FuzzyScorerTest.kt` (40 tests), `PredictorEngineTest.kt` (34 tests) | ✅ 74 tests |
+| `app/src/test/java/com/example/smarttext/ime/` | `GestureRecognizerTest.kt` (14 tests), `KeyboardDataTest.kt` (19 tests) | ✅ 33 tests |
+| `app/src/androidTest/java/com/example/smarttext/ui/main/` | `MainScreenTest.kt` | ⚠️ Requiere instrumentación |
+| **Total** | **5 archivos de test** | **✅ 107 tests unitarios — 0 fallos** |
 
 ### 1.3 Análisis de Cobertura por Funcionalidad
 
@@ -66,45 +65,36 @@
 
 | Funcionalidad | Riesgo | Mitigación |
 |---------------|--------|------------|
-| Precisión de predicción (top-1, top-3) | Alto | Validación manual con logs |
-| Scoring difuso (FuzzyScorer.evaluateRules) | Alto | Validación manual |
-| Distancia Levenshtein en casos extremos | Medio | Validación manual |
-| Bigramas contextuales | Medio | Validación manual |
-| Reconocimiento de gestos (swipe) | Alto | No verificado (onDraw no visible) |
-| Renderizado visual del teclado | Alto | No verificado en captura |
-| Persistencia de user_data.json | Medio | No verificado |
-| Cambio de idioma (ES ↔ EN) | Medio | No verificado |
-| Shift mode y shift lock | Bajo | No verificado |
-| Manejo de errores (corpus corrupto) | Bajo | No verificado |
-| Concurrencia (@Synchronized en multi-thread) | Medio | No verificado |
-| Ciclo de vida completo (onDestroy, etc.) | Medio | Parcialmente verificado |
+| Renderizado visual del teclado | Alto | No verificado (requiere instrumentación) |
+| Shift mode y shift lock | Bajo | Sin validación directa |
+| SmartKeyboardView.onTouchEvent() | Alto | Requiere instrumentación (simular MotionEvents) |
+| SmartIME.commitText() vía InputConnection | Alto | Requiere instrumentación (mock InputConnection) |
 
 ### 1.4 Nota sobre Verificación por Integración
 
-Aunque no hay tests unitarios automatizados, se realizó **verificación funcional en emulador Android API 36** mediante:
+Aunque los tests unitarios automatizados cubren los componentes principales (107 tests), se realizó además **verificación funcional en emulador Android API 36** mediante:
 
-- **Logcat**: Se verificaron logs de inicialización, ciclo de vida del IME, carga del corpus y dimensiones de la vista
+- **Logcat**: Se verificaron logs de inicialización, ciclo de vida del IME, carga del corpus, dimensiones de la vista y **detección de gestos swipe**
 - **ADB**: Se verificó registro como IME (`ime list -a`, `ime set`), instalación de APK y habilitación del servicio
+- **Glide Typing**: Se verificó la detección de patrones 'ol', 'hjkio', 'hgfdsa' mediante logs del GestureRecognizer
 - **UI Automator**: Se verificó la jerarquía de UI tras taps en campos de texto
 
 Esta verificación cubre aproximadamente **35% de las funcionalidades** (10 de 28), principalmente las relacionadas con el ciclo de vida del sistema Android. Queda pendiente la verificación automatizada de las funcionalidades del motor predictivo y el reconocimiento de gestos.
 
 ### 1.5 Recomendaciones de Mejora de Cobertura
 
-1. **Tests unitarios prioritarios** (80% del valor con 20% del esfuerzo):
-   - `FuzzyScorer.getScore()` — probar las 7 reglas difusas
-   - `PredictorEngine.searchPrefix()` — probar búsqueda binaria
-   - `PredictorEngine.predict()` — probar los 4 caminos de predicción
-   - `GestureRecognizer.levenshtein()` — probar casos edge
+1. **Tests instrumentados** (requieren emulador API 24+):
+   - `SmartIME` — verificar ciclo de vida completo con `InputConnection` mockeado
+   - `SmartKeyboardView` — simular `MotionEvents` de tap, swipe, y verificar `invalidate()`
+   - Shift mode y shift lock mediante MotionEvents
 
-2. **Tests instrumentados**:
-   - `SmartIME.commitText()` → verificar `InputConnection`
-   - `SmartKeyboardView.onTouchEvent()` → simular taps y swipes
+2. **Tests de integración**:
+   - Flujo completo: Input → PredictorEngine.commitText() → feedback loop
+   - Verificación de persistencia multi-sesión con emulador
 
-3. **Framework sugerido**:
-   - **JUnit 4** (ya incluido en `libs.versions.toml`)
-   - **MockK** (no incluido — agregar para mockear `InputConnection` y `Context`)
-   - **Compose UI Test** (ya incluido para tests de `SettingsScreen`)
+3. **Tests de rendimiento**:
+   - Tiempo de `predict()` con corpus completo (10K palabras)
+   - Tiempo de `searchPrefix()` en el peor caso (prefijo vacío)
 
 ---
 
