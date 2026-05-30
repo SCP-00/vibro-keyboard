@@ -8,8 +8,8 @@
 
 [![Download APK](https://img.shields.io/badge/📲%20Descargar%20APK-v1.0-brightgreen?style=for-the-badge&logo=android)](https://github.com/SCP-00/Android_text_predicto_board/releases/latest/download/app-release.apk)
 [![Build APK](https://github.com/SCP-00/Android_text_predicto_board/actions/workflows/build-apk.yml/badge.svg)](https://github.com/SCP-00/Android_text_predicto_board/actions/workflows/build-apk.yml)
-[![Tests](https://img.shields.io/badge/Tests-107%20✔️-blue?style=flat-square)]()
-[![License](https://img.shields.io/badge/License-Academic-lightgrey?style=flat-square)]()
+[![Tests](https://img.shields.io/badge/Tests-107%20✔️-blue?style=flat-square)](https://github.com/SCP-00/Android_text_predicto_board/actions)
+[![License](https://img.shields.io/badge/License-Academic-lightgrey?style=flat-square)](LICENSE)
 
 </div>
 
