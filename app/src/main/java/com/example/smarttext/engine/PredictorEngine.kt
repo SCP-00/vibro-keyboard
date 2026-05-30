@@ -270,6 +270,82 @@ class PredictorEngine(private val context: Context, private val lang: String) {
         return suggestions
     }
 
+    // ────────────────────────  Autocorrection  ────────────────────────
+
+    /**
+     * Check if a word exists in the dictionary (corpus or user data).
+     * Short words (1 char) are considered known to avoid aggressive correction.
+     */
+    private fun isKnownWord(word: String): Boolean {
+        val lower = word.lowercase()
+        if (lower.length <= 2) return true
+        // searchPrefix with minLength=1 catches short words too
+        val results = searchPrefix(lower, minLength = 1)
+        return results.any { it.word == lower }
+    }
+
+    /**
+     * Find the best autocorrection for a potentially misspelled word.
+     *
+     * Uses FuzzyScorer (Levenshtein + frequency + context) to find the
+     * closest dictionary word. Only suggests a correction if:
+     * 1. The word is NOT already in the dictionary
+     * 2. A high-confidence match exists (shares first letter, close Levenshtein)
+     * 3. The word is at least 3 characters long
+     *
+     * @param word The potentially misspelled word.
+     * @return The corrected word, or null if no correction needed or possible.
+     */
+    fun autocorrect(word: String): String? {
+        val lower = word.lowercase().trim()
+        if (lower.length < 3) return null  // Too short for reliable correction
+
+        // Already in dictionary — no correction needed
+        if (isKnownWord(lower)) return null
+
+        // Get best suggestion using FuzzyScorer (prefix + Levenshtein)
+        val suggestions = predict(lower, null, 5)
+        if (suggestions.isEmpty()) return null
+
+        val best = suggestions.first()
+        if (best == lower) return null  // Same word (shouldn't happen)
+
+        // Safety checks before suggesting a correction:
+        // 1. Must share the first letter
+        // 2. The edit distance should be reasonable
+        val editDist = levenshtein(best, lower)
+        val maxEdit = when {
+            lower.length <= 4 -> 1
+            lower.length <= 7 -> 2
+            else -> 3
+        }
+        if (best.first() != lower.first() || editDist > maxEdit) return null
+
+        Log.d(TAG, "Autocorrect: '$lower' -> '$best' (editDist=$editDist)")
+        return best
+    }
+
+    private fun levenshtein(s1: String, s2: String): Int {
+        val a = s1.lowercase()
+        val b = s2.lowercase()
+        if (a.length < b.length) return levenshtein(s2, s1)
+        if (b.isEmpty()) return a.length
+
+        var prev = IntArray(b.length + 1) { it }
+        for (i in a.indices) {
+            val curr = IntArray(b.length + 1)
+            curr[0] = i + 1
+            for (j in b.indices) {
+                val insert = prev[j + 1] + 1
+                val delete = curr[j] + 1
+                val subst = prev[j] + if (a[i] == b[j]) 0 else 1
+                curr[j + 1] = minOf(insert, delete, subst)
+            }
+            prev = curr
+        }
+        return prev[b.length]
+    }
+
     // ────────────────────────  Internal helpers  ────────────────────────
 
     /** Binary search lower bound (first index >= prefix). */

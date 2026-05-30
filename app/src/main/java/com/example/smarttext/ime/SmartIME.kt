@@ -40,6 +40,7 @@ class SmartIME : InputMethodService() {
     private var keyboardView: SmartKeyboardView? = null
     private var currentLang: String = "es"
     private var currentInputWord: String = ""
+    private var previousWord: String? = null  // For bigram context & autocorrect
 
     // ─── Lifecycle ───
 
@@ -134,17 +135,21 @@ class SmartIME : InputMethodService() {
     fun commitText(text: String) {
         val ic = currentInputConnection ?: return
 
-        // Track current word for predictions
         if (text.length == 1 && text[0].isLetter()) {
             currentInputWord += text
             keyboardView?.updatePredictions(currentInputWord)
         } else {
-            // Non-letter character (space, punctuation) — reset current word
-            val p = predictor
-            if (currentInputWord.isNotEmpty() && p != null) {
-                scope.launch {
-                    p.updateFrequency(currentInputWord.lowercase())
+            // Non-letter character (space, punctuation) — finalize word
+            if (currentInputWord.isNotEmpty()) {
+                val p = predictor
+                if (p != null) {
+                    val word = currentInputWord.lowercase()
+                    scope.launch {
+                        p.updateFrequency(word)
+                    }
                 }
+                // Reset for next word — store as context for predict()
+                previousWord = currentInputWord.lowercase()
             }
             currentInputWord = ""
             if (text == " " || text == "." || text == ",") {
@@ -153,6 +158,63 @@ class SmartIME : InputMethodService() {
         }
 
         ic.commitText(text, 1)
+    }
+
+    /**
+     * Press the space bar with autocorrection.
+     *
+     * If the current word is not in the dictionary and a good correction
+     * is found, replaces the word before committing the space.
+     */
+    fun performCommitSpace() {
+        val ic = currentInputConnection ?: return
+
+        // ── Autocorrection check ──
+        if (currentInputWord.isNotEmpty()) {
+            val typedWord = currentInputWord.lowercase()
+            val p = predictor
+
+            if (p != null) {
+                // Ask PredictorEngine for a correction
+                val correction = p.autocorrect(typedWord)
+                if (correction != null && correction != typedWord) {
+                    Log.d(TAG, "Autocorrect: '$typedWord' -> '$correction'")
+
+                    // Replace the typed word with the correction
+                    ic.deleteSurroundingText(currentInputWord.length, 0)
+                    // Commit correction preserving the user's original casing intent
+                    val originalFirstCased = if (currentInputWord.first().isUpperCase())
+                        correction.replaceFirstChar { it.uppercase() } else correction
+                    ic.commitText(originalFirstCased, 1)
+
+                    // Track the corrected word
+                    currentInputWord = correction
+                    previousWord = correction
+
+                    // Update frequency for the corrected word
+                    scope.launch {
+                        p.updateFrequency(correction)
+                    }
+
+                    keyboardView?.updatePredictions("")
+                    // Now commit the space after the correction
+                    ic.commitText(" ", 1)
+                    currentInputWord = ""
+                    return
+                }
+
+                // Word is known (or no good correction) — update frequency
+                scope.launch {
+                    p.updateFrequency(typedWord)
+                }
+            }
+
+            previousWord = typedWord
+        }
+
+        currentInputWord = ""
+        ic.commitText(" ", 1)
+        keyboardView?.updatePredictions("")
     }
 
     /**

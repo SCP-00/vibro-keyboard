@@ -458,7 +458,7 @@ class SmartKeyboardView(
                 rebuildKeys()
             }
             KeyCode.BACKSPACE -> ime.deleteBackward()
-            KeyCode.SPACE -> ime.commitText(" ")
+            KeyCode.SPACE -> ime.performCommitSpace()
             KeyCode.ENTER -> ime.performEnter()
             KeyCode.SWITCH_LANG -> {
                 val newLang = if (currentLang == "es") "en" else "es"
