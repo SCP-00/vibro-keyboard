@@ -32,24 +32,25 @@ class GestureRecognizer {
         /** Distance threshold to detect a swipe vs tap (in pixels). */
         private const val SWIPE_DISTANCE_THRESHOLD = 30f
         /** Hit radius multiplier for nearest-key detection. */
-        private const val KEY_HIT_RADIUS_MULT = 1.5f
+        private const val KEY_HIT_RADIUS_MULT = 1.6f
         /** Resample the path to this many equidistant points for DTW matching. */
-        private const val RESAMPLE_COUNT = 40
+        private const val RESAMPLE_COUNT = 60
         /** Minimum points to consider a valid gesture. */
-        private const val MIN_GESTURE_POINTS = 5
+        private const val MIN_GESTURE_POINTS = 6
         /** Max length for gesture-matched words. */
         private const val MAX_GESTURE_WORD_LENGTH = 20
 
-        // Scoring weights
-        private const val DTW_WEIGHT = 0.45f
-        private const val LEV_WEIGHT = 0.15f
+        // Scoring weights — adjusted for better gesture precision
+        private const val DTW_WEIGHT = 0.40f
+        private const val LEV_WEIGHT = 0.10f
         private const val LENGTH_WEIGHT = 0.10f
-        private const val FREQ_WEIGHT = 0.30f
+        private const val FREQ_WEIGHT = 0.25f
+        private const val DIRECTION_WEIGHT = 0.15f
 
         /** Minimum subsequence ratio to consider a match. */
-        private const val MIN_SUBSEQ_RATIO = 0.30f
+        private const val MIN_SUBSEQ_RATIO = 0.35f
         /** Maximum edit distance ratio (relative to pattern length). */
-        private const val MAX_EDIT_RATIO = 0.65f
+        private const val MAX_EDIT_RATIO = 0.60f
     }
 
     data class GestureResult(

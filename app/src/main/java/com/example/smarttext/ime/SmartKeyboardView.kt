@@ -251,6 +251,10 @@ class SmartKeyboardView(
     private var touchStartY = 0f
     private var hasSwiped = false
 
+    // ─── Cached view dimensions for re-layout on language switch ───
+    private var cachedViewWidth: Int = 0
+    private var cachedViewHeight: Int = 0
+
     // ─── Animators ───
     private val decelerateInterpolator = DecelerateInterpolator()
     private val linearInterpolator = LinearInterpolator()
@@ -277,7 +281,16 @@ class SmartKeyboardView(
 
     private fun rebuildKeys() {
         keys = KeyboardData.generate(currentLang, shiftMode)
-        post { requestLayout() }
+        // Immediately re-layout keys with cached dimensions so they have
+        // valid bounds before the next draw pass (requestLayout alone is
+        // async and may not trigger onSizeChanged if dimensions unchanged).
+        if (cachedViewWidth > 0 && cachedViewHeight > 0) {
+            keys = KeyboardData.layoutKeys(
+                keys, cachedViewWidth.toFloat(), cachedViewHeight.toFloat(),
+                topPadding = candidateStripHeight
+            )
+        }
+        invalidate()
     }
 
     fun updatePredictions(currentWord: String, contextWord: String? = null) {
@@ -331,8 +344,10 @@ class SmartKeyboardView(
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        val keyAreaHeight = h - candidateStripHeight
-        keys = KeyboardData.layoutKeys(keys, w.toFloat(), keyAreaHeight, topPadding = candidateStripHeight)
+        cachedViewWidth = w
+        cachedViewHeight = h
+        // Pass full view height — layoutKeys subtracts topPadding internally
+        keys = KeyboardData.layoutKeys(keys, w.toFloat(), h.toFloat(), topPadding = candidateStripHeight)
         invalidate()
     }
 
