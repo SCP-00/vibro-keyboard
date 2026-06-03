@@ -40,12 +40,11 @@ class GestureRecognizer {
         /** Max length for gesture-matched words. */
         private const val MAX_GESTURE_WORD_LENGTH = 20
 
-        // Scoring weights — adjusted for better gesture precision
-        private const val DTW_WEIGHT = 0.40f
+        // Scoring weights — adjusted for better gesture precision (must sum to 1.0)
+        private const val DTW_WEIGHT = 0.45f
         private const val LEV_WEIGHT = 0.10f
         private const val LENGTH_WEIGHT = 0.10f
-        private const val FREQ_WEIGHT = 0.25f
-        private const val DIRECTION_WEIGHT = 0.15f
+        private const val FREQ_WEIGHT = 0.35f
 
         /** Minimum subsequence ratio to consider a match. */
         private const val MIN_SUBSEQ_RATIO = 0.35f
