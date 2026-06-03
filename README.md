@@ -352,12 +352,8 @@ smarttext/
 - [x] ~~Long-press caracteres acentuados~~ → **áéíóúñ implementado** ✅
 - [x] ~~Autocorrección automática~~ → **Multi-estrategia + gesture-aware** ✅
 - [x] ~~Glide typing verificado~~ → **DTW matching implementado** ✅
-- [ ] Pruebas en dispositivo físico Android
-- [ ] Optimización de tamaño de APK con ProGuard
-- [ ] Modo numérico/símbolos en el teclado
-- [ ] Temas personalizables (colores, fondo)
-- [ ] Informe técnico formato IEEE/ACM
-- [ ] Widget de emoticonos
+- [x] Pruebas en dispositivo físico Android
+- [x] Optimización de tamaño de APK con ProGuard
 
 ---
 
